@@ -1,0 +1,25 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "description": "��#\u0000 \u0000W\u0000e\u0000b\u0000\r\u0000 \u0000",
+  "homepage": "https://github.com/VAnhNguyen2401/Web#readme",
+  "bugs": {
+    "url": "https://github.com/VAnhNguyen2401/Web/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VAnhNguyen2401/Web.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "dotenv": "^8.2.0",
+    "express": "^5.1.0"
+  }
+}
