@@ -10,24 +10,32 @@ import { isAuthenticated, isAdmin, isUser } from "../middleware/authMiddleware.j
 let router = express.Router();
 
 let initWebRoute = (app) => {
-    router.get('/', homeController.getHomePage);
+    // Public routes
+    router.get('/', (req, res) => {
+        if (req.session.user) {
+            return res.redirect('/homepage');
+        }
+        return res.redirect('/login');
+    });
 
     router.get('/about', homeController.getAboutPage);
-    router.get('/', homeController.getHomePage);
+    router.get('/homepage', isAuthenticated, homeController.getHomePage);
 
-    router.get('/fee', isAuthenticated, isUser, userFeeController.getFeePage);
-    router.post('/pay-fee/:id', isAuthenticated, isUser, userFeeController.payFee);
-
-
+    // Auth routes
     router.get('/login', authController.getLoginPage);
     router.post('/login', authController.handleLogin);
     router.get('/logout', authController.logout);
 
-    //admin
+    // User routes
+    router.get('/fee', isAuthenticated, isUser, userFeeController.getFeePage);
+    router.post('/pay-fee/:id', isAuthenticated, isUser, userFeeController.payFee);
+
+    // Admin routes
     router.get('/admin/user', isAuthenticated, isAdmin, adminUserController.getAdminUserPage);
     router.get('/admin/fee', isAuthenticated, isAdmin, adminFeeController.getAdminFeePage);
     router.post('/admin/fee', isAuthenticated, isAdmin, adminFeeController.createFee);
     router.post('/admin/fee/:id/update-status', isAuthenticated, isAdmin, adminFeeController.updateFeeStatus);
+
     app.use("/", router);
 }
 

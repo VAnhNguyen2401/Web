@@ -3,166 +3,569 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Khoản thu của tôi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khoản thu của tôi - Hệ thống thu phí chung cư</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="/node_modules/qrcode/build/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .nav-link {
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: #3b82f6;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .fee-card {
+            transition: all 0.3s ease;
+        }
+
+        .fee-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        #qrCode {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .payment-status {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+
+        .payment-status.success {
+            color: #10B981;
+            background-color: #ECFDF5;
+        }
+
+        .payment-status.error {
+            color: #EF4444;
+            background-color: #FEF2F2;
+        }
+
+        .payment-status.warning {
+            color: #F59E0B;
+            background-color: #FEF3C7;
+        }
+
+        .remaining-amount {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background-color: #FEF3C7;
+            border: 1px solid #F59E0B;
+        }
+
+        .countdown-circle {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            margin: 0 auto 1rem;
+        }
+
+        .countdown-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .countdown-circle circle {
+            fill: none;
+            stroke-width: 4;
+        }
+
+        .countdown-circle .background {
+            stroke: #E5E7EB;
+        }
+
+        .countdown-circle .progress {
+            stroke: #3B82F6;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        .countdown-circle .time {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1F2937;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6B7280;
+        }
+
+        .close-modal:hover {
+            color: #374151;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gradient-to-br from-blue-50 via-blue-100 to-cyan-50 min-h-screen">
     <!-- Navigation Bar -->
-    <nav class="bg-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
+    <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-md z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <h1 class="text-xl font-bold text-blue-600">Quản lý khoản thu</h1>
+                    <a href="/homepage"
+                        class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 text-transparent bg-clip-text hover:from-blue-700 hover:to-cyan-700 transition-all duration-300">
+                        🏢 Hệ thống thu phí
+                    </a>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <button onclick="window.location.reload()"
-                        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium">
-                        🔄 Làm mới
-                    </button>
-                    <a href="/"
-                        class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium">
-                        🏠 Trang chủ
+                    <a href="/homepage"
+                        class="nav-link px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                        <i class="fas fa-home mr-2"></i>Trang chủ
                     </a>
                     <a href="/logout"
-                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium">
-                        ↪ Đăng xuất
+                        class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-red-600 rounded-md hover:from-red-600 hover:to-red-700 transition-all duration-300">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất
                     </a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <!-- User Info Card -->
-        <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-6">
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <span class="text-white text-2xl mr-2">👤</span>
-                        <div>
-                            <h3 class="text-xl font-bold text-white">
-                                <%= user.firstName %>
-                                    <%= user.lastName %>
-                            </h3>
-                            <p class="text-blue-100">
-                                <%= user.email %>
-                            </p>
-                        </div>
+    <!-- Main Content -->
+    <main class="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 text-transparent bg-clip-text">
+                    <i class="fas fa-money-bill mr-3"></i>Khoản thu của tôi
+                </h1>
+                <p class="mt-2 text-gray-600">Danh sách các khoản thu cần thanh toán</p>
+            </div>
+
+            <!-- User Info Card -->
+            <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg mb-8 p-6 border border-blue-100">
+                <div class="flex items-center">
+                    <div
+                        class="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center shadow-md mr-6">
+                        <i class="fas fa-user text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-blue-900">
+                            <%= user.firstName %>
+                                <%= user.lastName %>
+                                    <span
+                                        class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        <i class="fas fa-user mr-1"></i>
+                                        <%= user.role %>
+                                    </span>
+                        </h2>
+                        <p class="text-blue-600">
+                            <i class="fas fa-envelope mr-2"></i>
+                            <%= user.email %>
+                        </p>
                     </div>
                 </div>
             </div>
-            <div class="px-6 py-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-blue-50 rounded-lg p-4">
-                        <p class="text-sm text-blue-600 font-semibold">Tổng số khoản thu</p>
-                        <p class="text-2xl font-bold text-blue-800">
+
+            <!-- Fee List -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <% fees.forEach(function(fee) { %>
+                    <div class="fee-card bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-blue-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-blue-900">
+                                <%= fee.feeType %>
+                            </h3>
+                            <span class="px-3 py-1 text-xs font-medium rounded-full flex items-center w-fit
+                                <%= fee.feeStatus === 'đã thanh toán' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-yellow-100 text-yellow-800' %>">
+                                <i class="<%= fee.feeStatus === 'đã thanh toán' 
+                                    ? 'fas fa-check-circle' 
+                                    : 'fas fa-clock' %> mr-1"></i>
+                                <%= fee.feeStatus %>
+                            </span>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="flex items-center text-sm">
+                                <span class="w-24 text-gray-500">Số tiền:</span>
+                                <span class="text-blue-600 font-medium">
+                                    <%= fee.feeAmount.toLocaleString('vi-VN') %> VNĐ
+                                </span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <span class="w-24 text-gray-500">Mô tả:</span>
+                                <span class="text-gray-700">
+                                    <%= fee.feeDescription || 'Không có mô tả' %>
+                                </span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <span class="w-24 text-gray-500">Ngày tạo:</span>
+                                <span class="text-gray-700">
+                                    <%= new Date(fee.feeCreatedAt).toLocaleDateString('vi-VN') %>
+                                </span>
+                            </div>
+                        </div>
+
+                        <% if (fee.feeStatus==='chưa thanh toán' ) { %>
+                            <div class="mt-4 pt-4 border-t border-blue-100">
+                                <button
+                                    onclick="showPaymentModal('<%= fee.id %>', '<%= fee.feeAmount %>', '<%= fee.feeType %>')"
+                                    class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center justify-center">
+                                    <i class="fas fa-qrcode mr-2"></i> Thanh toán qua QR
+                                </button>
+                            </div>
+                            <% } %>
+                    </div>
+                    <% }); %>
+            </div>
+
+            <!-- Summary Card -->
+            <div class="mt-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-blue-100">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Tổng số khoản thu</p>
+                        <p class="text-2xl font-bold text-blue-600">
                             <%= fees.length %>
                         </p>
                     </div>
-                    <div class="bg-yellow-50 rounded-lg p-4">
-                        <p class="text-sm text-yellow-600 font-semibold">Chưa thanh toán</p>
-                        <p class="text-2xl font-bold text-yellow-800">
-                            <%= pendingCount %> khoản
-                        </p>
-                        <p class="text-sm text-yellow-600">
-                            <%= pendingAmount.toLocaleString('vi-VN') %> VNĐ
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Đã thanh toán</p>
+                        <p class="text-2xl font-bold text-green-600">
+                            <%= fees.filter(f=> f.feeStatus === 'đã thanh toán').length %>
                         </p>
                     </div>
-                    <div class="bg-green-50 rounded-lg p-4">
-                        <p class="text-sm text-green-600 font-semibold">Tổng tiền</p>
-                        <p class="text-2xl font-bold text-green-800">
-                            <%= totalAmount.toLocaleString('vi-VN') %> VNĐ
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Chưa thanh toán</p>
+                        <p class="text-2xl font-bold text-yellow-600">
+                            <%= fees.filter(f=> f.feeStatus === 'chưa thanh toán').length %>
                         </p>
                     </div>
                 </div>
             </div>
         </div>
+    </main>
 
-        <!-- Fees Table -->
-        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-xl font-semibold text-gray-800">Danh sách khoản thu</h2>
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closePaymentModal()">&times;</span>
+            <div class="text-center mb-4">
+                <h3 class="text-xl font-bold text-blue-900 mb-2">Thanh toán khoản thu</h3>
+                <p class="text-gray-600 mb-2" id="feeType"></p>
+                <p class="text-xl font-bold text-blue-600" id="feeAmount"></p>
             </div>
-            <div class="overflow-x-auto">
-                <% if (fees.length> 0) { %>
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Tên phí
-                                </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Số tiền
-                                </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Mô tả
-                                </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Trạng thái
-                                </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Ngày tạo
-                                </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Hành động
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <% fees.forEach(fee=> { %>
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        <%= fee.feeType %>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        <%= fee.feeAmount.toLocaleString('vi-VN') %> VNĐ
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <%= fee.feeDescription || '-' %>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            <%= fee.feeStatus === 'đã thanh toán' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
-                                            <%= fee.feeStatus %>
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <%= new Date(fee.feeCreatedAt).toLocaleDateString('vi-VN') %>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <% if (fee.feeStatus==='chưa thanh toán' ) { %>
-                                            <form action="/pay-fee/<%= fee.id %>" method="POST" class="inline">
-                                                <button type="submit"
-                                                    class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
-                                                    onclick="return confirm('Bạn có chắc chắn muốn thanh toán khoản phí này?')">
-                                                    Nộp phí
-                                                </button>
-                                            </form>
-                                            <% } else { %>
-                                                <span class="text-gray-400 text-xs">Đã thanh toán</span>
-                                                <% } %>
-                                    </td>
-                                </tr>
-                                <% }) %>
-                        </tbody>
-                    </table>
-                    <% } else { %>
-                        <div class="p-6 text-center text-gray-500">
-                            Bạn chưa có khoản thu nào.
-                        </div>
-                        <% } %>
+            <div class="flex justify-center mb-6">
+                <img src="/images/qr-code.png" alt="Mã QR thanh toán" class="w-48 h-48">
+            </div>
+            <div class="countdown-circle">
+                <svg viewBox="0 0 100 100">
+                    <circle class="background" cx="50" cy="50" r="45" />
+                    <circle class="progress" cx="50" cy="50" r="45" />
+                </svg>
+                <div class="time" id="countdown">2:00</div>
+            </div>
+            <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                <p class="text-sm text-blue-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Quét mã QR để thanh toán trong vòng <span class="font-bold">2 phút</span>.
+                </p>
+                <p class="text-sm text-blue-800 mt-2">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Vui lòng chuyển chính xác số tiền <span id="exactAmount" class="font-bold"></span> VNĐ
+                </p>
+            </div>
+            <div class="payment-status" id="paymentStatus">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                <span>Đang kiểm tra trạng thái thanh toán...</span>
+            </div>
+            <div id="remainingAmount" class="remaining-amount" style="display: none;">
+                <p class="text-yellow-800 font-medium mb-2">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    Số tiền đã chuyển chưa đủ
+                </p>
+                <p class="text-sm text-yellow-700">
+                    Số tiền còn thiếu: <span id="remainingValue" class="font-bold"></span> VNĐ
+                </p>
+                <button onclick="payRemaining()"
+                    class="mt-3 w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                    <i class="fas fa-qrcode mr-2"></i>Thanh toán số tiền còn lại
+                </button>
+            </div>
+            <div class="flex justify-end mt-4">
+                <button onclick="closePaymentModal()"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                    Hủy
+                </button>
             </div>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="bg-white/80 backdrop-blur-sm mt-12 border-t border-blue-100">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-gray-600 text-sm">
+                © 2024 Hệ thống thu phí chung cư. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        let currentFeeId = null;
+        let paymentCheckInterval = null;
+        let countdownInterval = null;
+        let timeLeft = 120; // 2 phút = 120 giây
+        const circle = document.querySelector('.countdown-circle .progress');
+        const radius = circle.r.baseVal.value;
+        const circumference = radius * 2 * Math.PI;
+
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        circle.style.strokeDashoffset = circumference;
+
+        function setProgress(percent) {
+            const offset = circumference - (percent / 100 * circumference);
+            circle.style.strokeDashoffset = offset;
+        }
+
+        function showPaymentModal(feeId, amount, feeType) {
+            console.log('Opening payment modal for fee:', feeId);
+
+            // Cập nhật thông tin khoản thu
+            document.getElementById('feeType').textContent = feeType;
+            const formattedAmount = parseInt(amount).toLocaleString('vi-VN');
+            document.getElementById('feeAmount').textContent = formattedAmount + ' VNĐ';
+            document.getElementById('exactAmount').textContent = amount; // Hiển thị số tiền chính xác không có dấu phẩy
+
+            // Reset thời gian và vòng tròn
+            timeLeft = 120;
+            setProgress(100);
+            updateCountdown();
+
+            // Hiển thị modal
+            const modal = document.getElementById('paymentModal');
+            const status = document.getElementById('paymentStatus');
+
+            modal.style.display = 'block';
+            status.style.display = 'block';
+            status.className = 'payment-status';
+            status.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang kiểm tra trạng thái thanh toán...';
+
+            currentFeeId = feeId;
+
+            // Bắt đầu đếm ngược
+            startCountdown();
+
+            // Bắt đầu kiểm tra trạng thái thanh toán
+            startPaymentCheck();
+        }
+
+        function updateCountdown() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('countdown').textContent =
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            // Cập nhật vòng tròn
+            const percent = (timeLeft / 120) * 100;
+            setProgress(percent);
+        }
+
+        function startCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                updateCountdown();
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    clearInterval(paymentCheckInterval);
+                    const status = document.getElementById('paymentStatus');
+                    status.className = 'payment-status error';
+                    status.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i> Hết thời gian thanh toán!';
+
+                    setTimeout(() => {
+                        closePaymentModal();
+                    }, 2000);
+                }
+            }, 1000);
+        }
+
+        function closePaymentModal() {
+            console.log('Closing payment modal');
+
+            const modal = document.getElementById('paymentModal');
+            const status = document.getElementById('paymentStatus');
+
+            modal.style.display = 'none';
+            status.style.display = 'none';
+            currentFeeId = null;
+
+            if (paymentCheckInterval) {
+                clearInterval(paymentCheckInterval);
+                paymentCheckInterval = null;
+            }
+
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+        }
+
+        function startPaymentCheck() {
+            if (paymentCheckInterval) {
+                clearInterval(paymentCheckInterval);
+            }
+
+            paymentCheckInterval = setInterval(() => {
+                if (!currentFeeId || timeLeft <= 0) return;
+
+                console.log('Checking payment status for fee:', currentFeeId);
+
+                fetch(`/user/fee/${currentFeeId}/check-status`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Payment status response:', data);
+                        const status = document.getElementById('paymentStatus');
+                        const remainingAmount = document.getElementById('remainingAmount');
+
+                        if (data.status === 'đã thanh toán') {
+                            status.className = 'payment-status success';
+                            status.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Thanh toán thành công!';
+                            remainingAmount.style.display = 'none';
+
+                            clearInterval(paymentCheckInterval);
+                            paymentCheckInterval = null;
+
+                            if (countdownInterval) {
+                                clearInterval(countdownInterval);
+                                countdownInterval = null;
+                            }
+
+                            setTimeout(() => {
+                                closePaymentModal();
+                                location.reload();
+                            }, 2000);
+                        } else if (data.paidAmount && data.paidAmount < data.totalAmount) {
+                            // Hiển thị số tiền còn thiếu
+                            const remaining = data.totalAmount - data.paidAmount;
+                            status.className = 'payment-status warning';
+                            status.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i> Đã nhận được một phần thanh toán';
+
+                            remainingAmount.style.display = 'block';
+                            document.getElementById('remainingValue').textContent = remaining.toLocaleString('vi-VN');
+
+                            // Dừng đếm ngược khi đã nhận được một phần thanh toán
+                            if (countdownInterval) {
+                                clearInterval(countdownInterval);
+                                countdownInterval = null;
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        if (timeLeft > 0) {
+                            console.error('Payment status check error:', error);
+                            return;
+                        }
+
+                        console.error('Payment status check error:', error);
+                        const status = document.getElementById('paymentStatus');
+                        status.className = 'payment-status error';
+                        status.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i> Có lỗi xảy ra khi kiểm tra trạng thái thanh toán';
+                    });
+            }, 5000);
+        }
+
+        function payRemaining() {
+            // Reset thời gian và vòng tròn cho phần thanh toán còn lại
+            timeLeft = 120;
+            setProgress(100);
+            updateCountdown();
+
+            const status = document.getElementById('paymentStatus');
+            status.className = 'payment-status';
+            status.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang kiểm tra trạng thái thanh toán...';
+
+            // Ẩn phần hiển thị số tiền còn thiếu
+            document.getElementById('remainingAmount').style.display = 'none';
+
+            // Bắt đầu đếm ngược mới
+            startCountdown();
+
+            // Tiếp tục kiểm tra trạng thái thanh toán
+            startPaymentCheck();
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('paymentModal');
+            if (event.target === modal) {
+                closePaymentModal();
+            }
+        }
+    </script>
 </body>
 
 </html>

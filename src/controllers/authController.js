@@ -45,17 +45,12 @@ const handleLogin = async (req, res) => {
             email: user.email,
             role: user.role,
             firstName: user.firstName,
-            lastName: user.lastName
+            lastName: user.lastName,
+            fullName: `${user.firstName} ${user.lastName}`
         };
 
-        console.log('Login successful, redirecting user with role:', user.role);
-
-        // Redirect based on role
-        if (user.role === 'admin') {
-            return res.redirect('/admin/user');
-        } else {
-            return res.redirect('/fee');
-        }
+        console.log('Login successful, redirecting to homepage');
+        return res.redirect('/homepage');
 
     } catch (error) {
         console.error('Login error:', error);

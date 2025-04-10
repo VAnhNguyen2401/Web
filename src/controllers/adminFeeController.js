@@ -2,23 +2,26 @@ import db from "../models";
 
 let getAdminFeePage = async (req, res) => {
     try {
-        // Fetch all users with their associated fees
+        // Fetch all users with their fees
         const users = await db.User.findAll({
             include: [{
                 model: db.Fee,
-                where: { userId: db.Sequelize.col('User.id') }, // Only include fees belonging to each user
-                required: false // LEFT JOIN to show users even if they have no fees
+                attributes: ['feeType', 'feeAmount', 'feeDescription', 'feeStatus', 'feeCreatedAt']
             }],
-            attributes: ['id', 'firstName', 'lastName', 'email', 'role', 'createdAt', 'updatedAt']
+            order: [
+                [db.Fee, 'feeCreatedAt', 'DESC'],
+                ['createdAt', 'DESC']
+            ]
         });
 
-        // Transform data before sending to view
+        // Transform user data
         const transformedUsers = users.map(user => {
             const plainUser = user.get({ plain: true });
             return {
                 ...plainUser,
                 fullName: `${plainUser.firstName} ${plainUser.lastName}`,
-                Fees: plainUser.Fees || []
+                createdAt: new Date(plainUser.createdAt).toLocaleDateString('vi-VN'),
+                updatedAt: new Date(plainUser.updatedAt).toLocaleDateString('vi-VN')
             };
         });
 
