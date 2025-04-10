@@ -2,6 +2,10 @@
 import express from "express";
 import homeController from "../controllers/homeController.js"; // nhớ thêm .js nếu dùng "type": "module"
 import userFeeController from "../controllers/userFeeController.js"; // nhớ thêm .js nếu dùng "type": "module"
+import adminFeeController from "../controllers/adminFeeController.js"; // nhớ thêm .js nếu dùng "type": "module"
+import adminUserController from "../controllers/adminUserController.js";
+import authController from "../controllers/authController.js"; // nhớ thêm .js nếu dùng "type": "module"
+import { isAuthenticated, isAdmin, isUser } from "../middleware/authMiddleware.js"; // nhớ thêm .js nếu dùng "type": "module"
 
 let router = express.Router();
 
@@ -10,11 +14,20 @@ let initWebRoute = (app) => {
 
     router.get('/about', homeController.getAboutPage);
     router.get('/', homeController.getHomePage);
-    router.get('/fee', userFeeController.getFeePage);
-    router.get('/pay/:id', userFeeController.payFee);
+
+    router.get('/fee', isAuthenticated, isUser, userFeeController.getFeePage);
+    router.post('/pay-fee/:id', isAuthenticated, isUser, userFeeController.payFee);
 
 
+    router.get('/login', authController.getLoginPage);
+    router.post('/login', authController.handleLogin);
+    router.get('/logout', authController.logout);
 
+    //admin
+    router.get('/admin/user', isAuthenticated, isAdmin, adminUserController.getAdminUserPage);
+    router.get('/admin/fee', isAuthenticated, isAdmin, adminFeeController.getAdminFeePage);
+    router.post('/admin/fee', isAuthenticated, isAdmin, adminFeeController.createFee);
+    router.post('/admin/fee/:id/update-status', isAuthenticated, isAdmin, adminFeeController.updateFeeStatus);
     app.use("/", router);
 }
 

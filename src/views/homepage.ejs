@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
 <head>
     <meta charset="UTF-8" />
@@ -16,15 +16,18 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
+            text-align: center;
         }
 
         h1 {
             color: #fff;
             font-size: 3rem;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .btn {
+            display: inline-block;
+            margin: 10px;
             padding: 15px 30px;
             font-size: 18px;
             color: #fff;
@@ -39,13 +42,48 @@
         .btn:hover {
             background-color: #0056b3;
         }
+
+        .user-info {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .logout-link {
+            margin-top: 10px;
+            color: #fff;
+            text-decoration: underline;
+            cursor: pointer;
+        }
     </style>
 </head>
 
 <body>
 
-    <h1>🏢 Hệ thống thu phí chung cư</h1>
-    <a href="/fee" class="btn">Nộp phí ngay</a>
+    <% if (session.user) { %>
+        <div class="user-info">
+            Xin chào, <strong>
+                <%= session.user.fullName %>
+            </strong> (<%= session.user.role %>)
+                <br>
+                <a href="/logout" class="logout-link">Đăng xuất</a>
+        </div>
+        <% } else { %>
+            <div class="user-info">
+                Bạn chưa đăng nhập.
+                <br>
+                <a href="/login" class="btn">Đăng nhập</a>
+            </div>
+            <% } %>
+
+                <h1>🏢 Hệ thống thu phí chung cư</h1>
+
+                <% if (session.user && session.user.role==='user' ) { %>
+                    <a href="/fee" class="btn">Nộp phí ngay</a>
+                    <% } else if (session.user && session.user.role==='admin' ) { %>
+                        <a href="/admin/user" class="btn">Quản lý người dùng</a>
+                        <a href="/admin/fee" class="btn">Quản lý khoản thu</a>
+                        <% } %>
 
 </body>
 

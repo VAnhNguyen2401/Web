@@ -1,9 +1,9 @@
 import express from "express";
 import bodyParser from "body-parser";
-import viewEngine from "./config/vieweEngine";
+import viewEngine from "./config/viewEngine";
 import initWebRoute from "./route/web";
 import connectDB from "./config/connectDB";
-
+import session from "express-session";
 require('dotenv').config();
 
 
@@ -11,6 +11,18 @@ require('dotenv').config();
 let app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(session({
+    secret: 'mysecretkey',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // set true nếu dùng HTTPS
+}));
+app.use((req, res, next) => {
+    res.locals.session = req.session;
+    next();
+});
+
 viewEngine(app);
 initWebRoute(app);
 connectDB();

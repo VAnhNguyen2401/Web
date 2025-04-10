@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng ký - Hệ thống quản lý người dùng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full mx-4">
+        <!-- Logo và tiêu đề -->
+        <div class="text-center mb-8">
+            <div
+                class="w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <i class="fas fa-user-plus text-white text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-blue-900">Tạo tài khoản mới</h1>
+            <p class="text-blue-600 mt-2">Đăng ký để sử dụng hệ thống</p>
+        </div>
+
+        <!-- Form đăng ký -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-8 border border-blue-100">
+            <% if (message) { %>
+                <div
+                    class="mb-6 p-4 rounded-lg <%= message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                    <i
+                        class="fas <%= message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle' %> mr-2"></i>
+                    <%= message.text %>
+                </div>
+                <% } %>
+
+                    <form action="/register" method="POST" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-blue-900 mb-2" for="firstName">
+                                    <i class="fas fa-user mr-2 text-blue-600"></i>Tên
+                                </label>
+                                <input type="text" id="firstName" name="firstName" required
+                                    class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200"
+                                    placeholder="Nhập tên của bạn">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-blue-900 mb-2" for="lastName">
+                                    <i class="fas fa-user mr-2 text-blue-600"></i>Họ
+                                </label>
+                                <input type="text" id="lastName" name="lastName" required
+                                    class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200"
+                                    placeholder="Nhập họ của bạn">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-blue-900 mb-2" for="email">
+                                <i class="fas fa-envelope mr-2 text-blue-600"></i>Email
+                            </label>
+                            <input type="email" id="email" name="email" required
+                                class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200"
+                                placeholder="Nhập email của bạn">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-blue-900 mb-2" for="password">
+                                <i class="fas fa-lock mr-2 text-blue-600"></i>Mật khẩu
+                            </label>
+                            <input type="password" id="password" name="password" required minlength="6"
+                                class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200"
+                                placeholder="Nhập mật khẩu (ít nhất 6 ký tự)">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-blue-900 mb-2" for="confirmPassword">
+                                <i class="fas fa-lock mr-2 text-blue-600"></i>Xác nhận mật khẩu
+                            </label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" required
+                                class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200"
+                                placeholder="Nhập lại mật khẩu">
+                        </div>
+
+                        <div class="flex items-center">
+                            <input type="checkbox" id="terms" name="terms" required
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-blue-300 rounded">
+                            <label for="terms" class="ml-2 block text-sm text-blue-900">
+                                Tôi đồng ý với <a href="#" class="text-blue-600 hover:text-blue-800">điều khoản sử
+                                    dụng</a>
+                            </label>
+                        </div>
+
+                        <button type="submit"
+                            class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg transition duration-200 flex items-center justify-center shadow-lg hover:shadow-xl">
+                            <i class="fas fa-user-plus mr-2"></i>
+                            Đăng ký
+                        </button>
+                    </form>
+
+                    <div class="mt-6 text-center">
+                        <p class="text-sm text-blue-900">
+                            Đã có tài khoản?
+                            <a href="/login" class="text-blue-600 hover:text-blue-800 font-medium">
+                                Đăng nhập ngay
+                            </a>
+                        </p>
+                    </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 text-center text-blue-600">
+            <p class="text-sm">
+                © 2024 Hệ thống quản lý người dùng. All rights reserved.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.querySelector('form').addEventListener('submit', function (e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Mật khẩu xác nhận không khớp!');
+                return;
+            }
+
+            if (password.length < 6) {
+                e.preventDefault();
+                alert('Mật khẩu phải có ít nhất 6 ký tự!');
+                return;
+            }
+        });
+    </script>
+</body>
+
+</html>

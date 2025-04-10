@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý người dùng và khoản thu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 to-indigo-50">
+    <!-- Thanh điều hướng -->
+    <nav class="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <h1 class="text-xl font-bold text-white flex items-center">
+                            <i class="fas fa-users-cog mr-3 text-yellow-300"></i>
+                            Quản lý hệ thống
+                        </h1>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/admin/user"
+                            class="border-blue-500 text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Quản lý người dùng
+                        </a>
+                        <a href="/admin/fee"
+                            class="border-transparent text-white/80 hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Quản lý khoản thu
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="window.location.reload()"
+                        class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center backdrop-blur-sm">
+                        <i class="fas fa-sync-alt mr-2"></i> Làm mới
+                    </button>
+                    <button onclick="window.location.href='/'"
+                        class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center backdrop-blur-sm">
+                        <i class="fas fa-home mr-2"></i> Trang chủ
+                    </button>
+                    <button onclick="window.location.href='/logout'"
+                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Form tạo khoản thu -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg mb-6 p-6 border border-blue-100">
+            <h2 class="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+                <i class="fas fa-plus-circle text-blue-600 mr-2"></i>
+                Tạo khoản thu mới
+            </h2>
+            <form id="createFeeForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-blue-900 mb-2" for="userId">
+                        <i class="fas fa-user mr-2 text-blue-600"></i>Chọn người dùng
+                    </label>
+                    <select id="userId" name="userId" required
+                        class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200">
+                        <option value="">Chọn người dùng...</option>
+                        <% users.forEach(function(user) { %>
+                            <% if (user.role !=='admin' ) { %>
+                                <option value="<%= user.id %>">
+                                    <%= user.firstName %>
+                                        <%= user.lastName %> (<%= user.email %>)
+                                </option>
+                                <% } %>
+                                    <% }); %>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-blue-900 mb-2" for="feeName">
+                        <i class="fas fa-file-invoice mr-2 text-blue-600"></i>Tên khoản thu
+                    </label>
+                    <input type="text" id="feeName" name="feeName" required
+                        class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-blue-900 mb-2" for="feeAmount">
+                        <i class="fas fa-money-bill mr-2 text-blue-600"></i>Số tiền
+                    </label>
+                    <input type="number" id="feeAmount" name="feeAmount" required min="0"
+                        class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-blue-900 mb-2" for="feeDescription">
+                        <i class="fas fa-info-circle mr-2 text-blue-600"></i>Mô tả
+                    </label>
+                    <input type="text" id="feeDescription" name="feeDescription"
+                        class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200">
+                </div>
+                <div class="md:col-span-2 lg:col-span-4 flex justify-end">
+                    <button type="submit"
+                        class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-2 rounded-lg transition duration-200 flex items-center shadow-lg hover:shadow-xl">
+                        <i class="fas fa-plus mr-2"></i> Tạo khoản thu
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Danh sách người dùng -->
+        <div class="space-y-6">
+            <% users.forEach(function(user) { %>
+                <% if (user.role !=='admin' ) { %>
+                    <div
+                        class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-blue-100 hover:shadow-xl transition duration-300">
+                        <!-- User Header -->
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div
+                                        class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shadow-md mr-4">
+                                        <i class="fas fa-user text-white text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-white">
+                                            <%= user.firstName %>
+                                                <%= user.lastName %>
+                                                    <span
+                                                        class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-white/20 text-white">
+                                                        <i class="fas fa-user mr-1"></i>
+                                                        <%= user.role %>
+                                                    </span>
+                                        </h3>
+                                        <p class="text-blue-100">
+                                            <i class="fas fa-envelope mr-2"></i>
+                                            <%= user.email %>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="text-white text-sm">
+                                    ID: <%= user.id %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User's Fees Table -->
+                        <div class="overflow-x-auto">
+                            <% if (user.Fees && user.Fees.length> 0) { %>
+                                <table class="min-w-full divide-y divide-blue-100">
+                                    <thead class="bg-blue-50">
+                                        <tr>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                                                <i class="fas fa-file-invoice-dollar mr-2 text-blue-600"></i>Tên phí
+                                            </th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                                                <i class="fas fa-money-bill-wave mr-2 text-blue-600"></i>Số tiền
+                                            </th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                                                <i class="fas fa-info-circle mr-2 text-blue-600"></i>Mô tả
+                                            </th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                                                <i class="fas fa-check-circle mr-2 text-blue-600"></i>Trạng thái
+                                            </th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                                                <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>Ngày tạo
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white/50 divide-y divide-blue-100">
+                                        <% user.Fees.forEach(function(fee) { %>
+                                            <tr class="hover:bg-blue-50/50 transition duration-150">
+                                                <td
+                                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-900">
+                                                    <%= fee.feeType %>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                    <span class="font-medium text-blue-600">
+                                                        <%= fee.feeAmount.toLocaleString('vi-VN') %> VNĐ
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-700">
+                                                    <%= fee.feeDescription || '-' %>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-3 py-1 text-xs font-medium rounded-full flex items-center w-fit
+                                                        <%= fee.feeStatus === 'đã thanh toán' 
+                                                            ? 'bg-green-100 text-green-800' 
+                                                            : 'bg-yellow-100 text-yellow-800' %>">
+                                                        <i class="<%= fee.feeStatus === 'đã thanh toán' 
+                                                            ? 'fas fa-check-circle' 
+                                                            : 'fas fa-clock' %> mr-1"></i>
+                                                        <%= fee.feeStatus %>
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-700">
+                                                    <i class="far fa-calendar-alt mr-2"></i>
+                                                    <%= new Date(fee.feeCreatedAt).toLocaleDateString('vi-VN') %>
+                                                </td>
+                                            </tr>
+                                            <% }); %>
+                                    </tbody>
+                                    <!-- Summary Row -->
+                                    <tfoot class="bg-blue-50">
+                                        <tr>
+                                            <td colspan="2"
+                                                class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-900">
+                                                Tổng số khoản thu: <%= user.Fees.length %>
+                                            </td>
+                                            <td colspan="3"
+                                                class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-900">
+                                                Tổng tiền: <%= user.Fees.reduce((sum, fee)=> sum +
+                                                    parseFloat(fee.feeAmount), 0).toLocaleString('vi-VN') %> VNĐ
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                                <% } else { %>
+                                    <div class="px-6 py-8 text-center">
+                                        <div class="text-blue-400">
+                                            <i class="fas fa-file-invoice text-4xl mb-3"></i>
+                                            <p class="text-sm">Chưa có khoản thu nào</p>
+                                        </div>
+                                    </div>
+                                    <% } %>
+                        </div>
+                    </div>
+                    <% } %>
+                        <% }); %>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('createFeeForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = {
+                userId: document.getElementById('userId').value,
+                feeName: document.getElementById('feeName').value,
+                feeAmount: document.getElementById('feeAmount').value,
+                feeDescription: document.getElementById('feeDescription').value
+            };
+
+            try {
+                const response = await fetch('/admin/fee/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    alert('Tạo khoản thu thành công!');
+                    window.location.reload();
+                } else {
+                    const error = await response.json();
+                    alert(error.message || 'Có lỗi xảy ra khi tạo khoản thu');
+                }
+            } catch (error) {
+                alert('Có lỗi xảy ra khi tạo khoản thu');
+            }
+        });
+    </script>
+</body>
+
+</html>
