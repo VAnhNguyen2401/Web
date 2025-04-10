@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Danh sách phí</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: #fff;
+        }
+
+        thead {
+            background-color: #007bff;
+            color: white;
+        }
+
+        th,
+        td {
+            padding: 15px 20px;
+            text-align: left;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tbody tr:hover {
+            background-color: #e8f0fe;
+        }
+
+        .no-data {
+            text-align: center;
+            font-size: 18px;
+            color: #888;
+        }
+
+        .btn-pay {
+            padding: 6px 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-pay:hover {
+            background-color: #218838;
+        }
+
+        .paid-text {
+            color: gray;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>📋 Danh sách phí</h1>
+
+    <% let fees=JSON.parse(data); %>
+
+        <% if (fees.length===0) { %>
+            <p class="no-data">Không có phí nào được tìm thấy.</p>
+            <% } else { %>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Amount</th>
+                            <th>Description</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Updated At</th>
+                            <th>Created By</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% fees.forEach(fee=> { %>
+                            <tr>
+                                <td>
+                                    <%= fee.feeAmount %>
+                                </td>
+                                <td>
+                                    <%= fee.feeDescription %>
+                                </td>
+                                <td>
+                                    <%= fee.feeDate %>
+                                </td>
+                                <td>
+                                    <%= fee.feeStatus %>
+                                </td>
+                                <td>
+                                    <%= fee.feeCreatedAt ? new Date(fee.feeCreatedAt).toLocaleDateString() : '' %>
+                                </td>
+                                <td>
+                                    <%= fee.feeUpdatedAt ? new Date(fee.feeUpdatedAt).toLocaleDateString() : '' %>
+                                </td>
+                                <td>
+                                    <%= fee.feeCreatedBy %>
+                                </td>
+                                <td>
+                                    <% if (fee.feeStatus==='Pending' ) { %>
+                                        <form method="POST" action="/pay/<%= fee.id %>">
+                                            <button type="submit" class="btn-pay">Nộp phí</button>
+                                        </form>
+                                        <% } else { %>
+                                            <span class="paid-text">Đã thanh toán</span>
+                                            <% } %>
+                                </td>
+                            </tr>
+                            <% }); %>
+                    </tbody>
+                </table>
+                <% } %>
+
+</body>
+
+</html>

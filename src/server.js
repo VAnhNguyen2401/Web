@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import viewEngine from "./config/vieweEngine";
 import initWebRoute from "./route/web";
 import connectDB from "./config/connectDB";
+
 require('dotenv').config();
 
 
