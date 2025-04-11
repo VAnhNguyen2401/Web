@@ -1,12 +1,11 @@
 // web.js
 import express from "express";
-import homeController from "../controllers/homeController.js"; // nhớ thêm .js nếu dùng "type": "module"
-import userFeeController from "../controllers/userFeeController.js"; // nhớ thêm .js nếu dùng "type": "module"
-import adminFeeController from "../controllers/adminFeeController.js"; // nhớ thêm .js nếu dùng "type": "module"
+import homeController from "../controllers/homeController.js";
+import userFeeController from "../controllers/userFeeController.js";
+import adminFeeController from "../controllers/adminFeeController.js";
 import adminUserController from "../controllers/adminUserController.js";
-import authController from "../controllers/authController.js"; // nhớ thêm .js nếu dùng "type": "module"
-import { isAuthenticated, isAdmin, isUser } from "../middleware/authMiddleware.js"; // nhớ thêm .js nếu dùng "type": "module"
-import adminController from "../controllers/adminController.js"; // nhớ thêm .js nếu dùng "type": "module"
+import authController from "../controllers/authController.js";
+import { isAuthenticated, isAdmin, isUser } from "../middleware/authMiddleware.js";
 
 let router = express.Router();
 
@@ -34,9 +33,10 @@ let initWebRoute = (app) => {
     router.post('/pay-fee/:id', isAuthenticated, isUser, userFeeController.payFee);
 
     // Admin routes
-    router.get('/admin/user', isAuthenticated, isAdmin, adminController.getUserManagementPage);
-    router.post('/admin/user', isAuthenticated, isAdmin, adminController.createUser);
-    router.delete('/admin/user/:id', isAuthenticated, isAdmin, adminController.deleteUser);
+    router.get('/admin/user', isAuthenticated, isAdmin, adminUserController.getAdminUserPage);
+    router.post('/admin/user', isAuthenticated, isAdmin, adminUserController.createUser);
+    router.put('/admin/user/:id', isAuthenticated, isAdmin, adminUserController.updateUser);
+    router.delete('/admin/user/:id', isAuthenticated, isAdmin, adminUserController.deleteUser);
     router.get('/admin/fee', isAuthenticated, isAdmin, adminFeeController.getAdminFeePage);
     router.post('/admin/fee', isAuthenticated, isAdmin, adminFeeController.createFee);
     router.post('/admin/fee/:id/update-status', isAuthenticated, isAdmin, adminFeeController.updateFeeStatus);
@@ -47,10 +47,7 @@ let initWebRoute = (app) => {
     router.get('/reset-password/:token', authController.getResetPasswordPage);
     router.post('/reset-password/:token', authController.handleResetPassword);
 
-
-
-
     app.use("/", router);
 }
 
-export default initWebRoute; // ✅ Dùng export ES6 đúng cách
+export default initWebRoute;
