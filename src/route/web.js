@@ -38,6 +38,15 @@ let initWebRoute = (app) => {
     router.post('/admin/fee', isAuthenticated, isAdmin, adminFeeController.createFee);
     router.post('/admin/fee/:id/update-status', isAuthenticated, isAdmin, adminFeeController.updateFeeStatus);
 
+    // Quên mật khẩu routes
+    router.get('/forgot-password', authController.getForgotPasswordPage);
+    router.post('/forgot-password', authController.handleForgotPassword);
+    router.get('/reset-password/:token', authController.getResetPasswordPage);
+    router.post('/reset-password/:token', authController.handleResetPassword);
+
+
+
+
     app.use("/", router);
 }
 

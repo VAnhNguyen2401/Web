@@ -21,6 +21,26 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
     </style>
 </head>
 
@@ -39,12 +59,15 @@
 
         <!-- Form đăng nhập -->
         <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-8 border border-blue-100">
-            <% if (typeof message !=='undefined' && message) { %>
-                <div
-                    class="mb-6 p-4 rounded-lg <%= message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
-                    <i
-                        class="fas <%= message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle' %> mr-2"></i>
-                    <%= message.text %>
+            <% if (error) { %>
+                <div class="mb-6 p-4 rounded-lg bg-red-100 text-red-800 border border-red-200 shake">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-circle mr-2 text-xl"></i>
+                        <span class="font-medium">
+                            <%= error %>
+                        </span>
+                    </div>
+                    <p class="mt-2 text-sm">Vui lòng kiểm tra lại email và mật khẩu của bạn</p>
                 </div>
                 <% } %>
 
@@ -67,7 +90,7 @@
                                 placeholder="Nhập mật khẩu của bạn">
                         </div>
 
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col space-y-4">
                             <div class="flex items-center">
                                 <input type="checkbox" id="remember" name="remember"
                                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-blue-300 rounded">
@@ -75,7 +98,9 @@
                                     Ghi nhớ đăng nhập
                                 </label>
                             </div>
-                            <a href="#" class="text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                            <a href="/forgot-password"
+                                class="text-center text-blue-600 hover:text-blue-800 transition-colors flex items-center justify-center">
+                                <i class="fas fa-key mr-2"></i>
                                 Quên mật khẩu?
                             </a>
                         </div>
