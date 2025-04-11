@@ -24,6 +24,8 @@ let initWebRoute = (app) => {
     // Auth routes
     router.get('/login', authController.getLoginPage);
     router.post('/login', authController.handleLogin);
+    router.get('/register', authController.getRegisterPage);
+    router.post('/register', authController.handleRegister);
     router.get('/logout', authController.logout);
 
     // User routes

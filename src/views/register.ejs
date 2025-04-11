@@ -45,86 +45,93 @@
 
         <!-- Form đăng ký -->
         <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-8 border border-blue-100">
-            <% if (message) { %>
-                <div
-                    class="mb-6 p-4 rounded-lg <%= message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
-                    <i
-                        class="fas <%= message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle' %> mr-2"></i>
-                    <%= message.text %>
+            <% if (error) { %>
+                <div class="mb-6 p-4 rounded-lg bg-red-100 text-red-800">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <%= error %>
                 </div>
                 <% } %>
 
-                    <form action="/register" method="POST" class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-blue-900 mb-2" for="firstName">
-                                    <i class="fas fa-user mr-2 text-blue-600"></i>Tên
-                                </label>
-                                <input type="text" id="firstName" name="firstName" required
-                                    class="form-input w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                                    placeholder="Nhập tên của bạn">
+                    <% if (success) { %>
+                        <div class="mb-6 p-4 rounded-lg bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <%= success %>
+                        </div>
+                        <% } %>
+
+                            <form action="/register" method="POST" class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-blue-900 mb-2" for="firstName">
+                                            <i class="fas fa-user mr-2 text-blue-600"></i>Tên
+                                        </label>
+                                        <input type="text" id="firstName" name="firstName" required
+                                            class="form-input w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                            placeholder="Nhập tên của bạn">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-blue-900 mb-2" for="lastName">
+                                            <i class="fas fa-user mr-2 text-blue-600"></i>Họ
+                                        </label>
+                                        <input type="text" id="lastName" name="lastName" required
+                                            class="form-input w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                            placeholder="Nhập họ của bạn">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-blue-900 mb-2" for="email">
+                                        <i class="fas fa-envelope mr-2 text-blue-600"></i>Email
+                                    </label>
+                                    <input type="email" id="email" name="email" required
+                                        class="form-input w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                        placeholder="Nhập email của bạn">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-blue-900 mb-2" for="password">
+                                        <i class="fas fa-lock mr-2 text-blue-600"></i>Mật khẩu
+                                    </label>
+                                    <input type="password" id="password" name="password" required minlength="6"
+                                        class="form-input w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                        placeholder="Nhập mật khẩu (ít nhất 6 ký tự)">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-blue-900 mb-2" for="confirmPassword">
+                                        <i class="fas fa-lock mr-2 text-blue-600"></i>Xác nhận mật khẩu
+                                    </label>
+                                    <input type="password" id="confirmPassword" name="confirmPassword" required
+                                        class="form-input w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                        placeholder="Nhập lại mật khẩu">
+                                </div>
+
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="terms" name="terms" required
+                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-blue-300 rounded">
+                                    <label for="terms" class="ml-2 block text-sm text-blue-900">
+                                        Tôi đồng ý với <a href="#"
+                                            class="text-blue-600 hover:text-blue-800 transition-colors">điều khoản sử
+                                            dụng</a>
+                                    </label>
+                                </div>
+
+                                <button type="submit"
+                                    class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-lg transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-xl">
+                                    <i class="fas fa-user-plus mr-2"></i>
+                                    Đăng ký
+                                </button>
+                            </form>
+
+                            <div class="mt-6 text-center">
+                                <p class="text-sm text-blue-900">
+                                    Đã có tài khoản?
+                                    <a href="/login"
+                                        class="text-blue-600 hover:text-blue-800 font-medium transition-colors">
+                                        Đăng nhập ngay
+                                    </a>
+                                </p>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-blue-900 mb-2" for="lastName">
-                                    <i class="fas fa-user mr-2 text-blue-600"></i>Họ
-                                </label>
-                                <input type="text" id="lastName" name="lastName" required
-                                    class="form-input w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                                    placeholder="Nhập họ của bạn">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-blue-900 mb-2" for="email">
-                                <i class="fas fa-envelope mr-2 text-blue-600"></i>Email
-                            </label>
-                            <input type="email" id="email" name="email" required
-                                class="form-input w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                                placeholder="Nhập email của bạn">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-blue-900 mb-2" for="password">
-                                <i class="fas fa-lock mr-2 text-blue-600"></i>Mật khẩu
-                            </label>
-                            <input type="password" id="password" name="password" required minlength="6"
-                                class="form-input w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                                placeholder="Nhập mật khẩu (ít nhất 6 ký tự)">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-blue-900 mb-2" for="confirmPassword">
-                                <i class="fas fa-lock mr-2 text-blue-600"></i>Xác nhận mật khẩu
-                            </label>
-                            <input type="password" id="confirmPassword" name="confirmPassword" required
-                                class="form-input w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                                placeholder="Nhập lại mật khẩu">
-                        </div>
-
-                        <div class="flex items-center">
-                            <input type="checkbox" id="terms" name="terms" required
-                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-blue-300 rounded">
-                            <label for="terms" class="ml-2 block text-sm text-blue-900">
-                                Tôi đồng ý với <a href="#"
-                                    class="text-blue-600 hover:text-blue-800 transition-colors">điều khoản sử dụng</a>
-                            </label>
-                        </div>
-
-                        <button type="submit"
-                            class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-lg transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-xl">
-                            <i class="fas fa-user-plus mr-2"></i>
-                            Đăng ký
-                        </button>
-                    </form>
-
-                    <div class="mt-6 text-center">
-                        <p class="text-sm text-blue-900">
-                            Đã có tài khoản?
-                            <a href="/login" class="text-blue-600 hover:text-blue-800 font-medium transition-colors">
-                                Đăng nhập ngay
-                            </a>
-                        </p>
-                    </div>
         </div>
 
         <!-- Footer -->
