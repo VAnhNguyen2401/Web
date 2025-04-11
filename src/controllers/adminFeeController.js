@@ -50,10 +50,10 @@ let createFee = async (req, res) => {
             feeDescription: feeDescription || '',
             feeDate: new Date(),
             feeStatus: 'chưa thanh toán',
-            userId: userId, // Associate with user
+            userId: userId,
             feeCreatedAt: new Date(),
             feeUpdatedAt: new Date(),
-            feeCreatedBy: req.session.user.email, // Track who created the fee
+            feeCreatedBy: req.session.user.email,
             feeUpdatedBy: req.session.user.email
         });
 

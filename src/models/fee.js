@@ -10,26 +10,69 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      Fee.belongsTo(models.User, { foreignKey: 'userId' });
     }
   };
   Fee.init({
-    feeType: DataTypes.STRING,
-    feeAmount: DataTypes.DECIMAL,
-    feeDescription: DataTypes.TEXT,
-    feeDate: DataTypes.DATEONLY,
-    feeStatus: DataTypes.STRING,
-    feeCreatedAt: DataTypes.DATE,
-    feeUpdatedAt: DataTypes.DATE,
-    feeDeletedAt: DataTypes.DATE,
-    feeCreatedBy: DataTypes.STRING,
-    feeUpdatedBy: DataTypes.STRING
+    feeType: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    feeAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      validate: {
+        min: 0
+      }
+    },
+    feeDescription: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    feeDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
+    },
+    feeStatus: {
+      type: DataTypes.ENUM('chưa thanh toán', 'đã thanh toán'),
+      allowNull: false,
+      defaultValue: 'chưa thanh toán'
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'Users',
+        key: 'id'
+      }
+    },
+    feeCreatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
+    },
+    feeUpdatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
+    },
+    feeDeletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    feeCreatedBy: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    feeUpdatedBy: {
+      type: DataTypes.STRING,
+      allowNull: false
+    }
   }, {
     sequelize,
     modelName: 'Fee',
+    timestamps: true
   });
-  Fee.associate = function (models) {
-    Fee.belongsTo(models.User, { foreignKey: 'userId' });
-  };
   return Fee;
 };

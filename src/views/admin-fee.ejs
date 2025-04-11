@@ -218,55 +218,33 @@
                                                 <tr class="hover:bg-blue-50/50 transition duration-150">
                                                     <td
                                                         class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-900">
-                                                        <%= fee.feeType %>
+                                                        <%= fee.feeType || 'Không có tên' %>
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                         <span class="font-medium text-blue-600">
-                                                            <%= fee.feeAmount.toLocaleString('vi-VN') %> VNĐ
+                                                            <%= (fee.feeAmount || 0).toLocaleString('vi-VN') %> VNĐ
                                                         </span>
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-700">
                                                         <%= fee.feeDescription || '-' %>
                                                     </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap">
-                                                        <span class="px-3 py-1 text-xs font-medium rounded-full flex items-center w-fit
-                                                            <%= fee.feeStatus === 'đã thanh toán' 
-                                                                ? 'bg-green-100 text-green-800' 
-                                                                : 'bg-yellow-100 text-yellow-800' %>">
-                                                            <i class="<%= fee.feeStatus === 'đã thanh toán' 
-                                                                ? 'fas fa-check-circle' 
-                                                                : 'fas fa-clock' %> mr-1"></i>
-                                                            <%= fee.feeStatus %>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                        <span
+                                                            class="px-2 py-1 rounded-full text-xs font-medium <%= fee.feeStatus === 'đã thanh toán' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
+                                                            <%= fee.feeStatus || 'chưa thanh toán' %>
                                                         </span>
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-700">
-                                                        <i class="far fa-calendar-alt mr-2"></i>
                                                         <%= new Date(fee.feeCreatedAt).toLocaleDateString('vi-VN') %>
                                                     </td>
                                                 </tr>
-                                                <% }) %>
+                                                <% }); %>
                                         </tbody>
-                                        <!-- Summary Row -->
-                                        <tfoot class="bg-blue-50">
-                                            <tr>
-                                                <td colspan="2"
-                                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-900">
-                                                    Tổng số khoản thu: <%= user.Fees.length %>
-                                                </td>
-                                                <td colspan="3"
-                                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-900">
-                                                    Tổng tiền: <%= user.Fees.reduce((sum, fee)=> sum +
-                                                        parseFloat(fee.feeAmount), 0).toLocaleString('vi-VN') %> VNĐ
-                                                </td>
-                                            </tr>
-                                        </tfoot>
                                     </table>
                                     <% } else { %>
-                                        <div class="px-6 py-8 text-center">
-                                            <div class="text-blue-400">
-                                                <i class="fas fa-file-invoice text-4xl mb-3"></i>
-                                                <p class="text-sm">Chưa có khoản thu nào</p>
-                                            </div>
+                                        <div class="text-center py-8 text-gray-500">
+                                            <i class="fas fa-info-circle text-4xl mb-4"></i>
+                                            <p>Người dùng này chưa có khoản thu nào.</p>
                                         </div>
                                         <% } %>
                             </div>
