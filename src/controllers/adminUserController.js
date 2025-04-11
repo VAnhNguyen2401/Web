@@ -1,4 +1,5 @@
 import db from '../models';
+const bcrypt = require('bcryptjs');
 
 let getAdminUserPage = async (req, res) => {
     try {
@@ -41,12 +42,16 @@ let createUser = async (req, res) => {
             return res.status(400).send("Email đã được sử dụng");
         }
 
+        // Hash password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         // Create new user
         const newUser = await db.User.create({
             firstName,
             lastName,
             email,
-            password,
+            password: hashedPassword,
             role: role || 'user'
         });
 
@@ -93,9 +98,11 @@ let updateUser = async (req, res) => {
             role: role || user.role // Keep existing role if not provided
         };
 
-        // Add password to update data if provided
+        // Add hashed password to update data if provided
         if (password) {
-            updateData.password = password;
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+            updateData.password = hashedPassword;
         }
 
         await user.update(updateData);
