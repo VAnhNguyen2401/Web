@@ -14,6 +14,11 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
   Fee.init({
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
     feeType: {
       type: DataTypes.STRING,
       allowNull: false
@@ -30,12 +35,12 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     feeDate: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW
     },
     feeStatus: {
-      type: DataTypes.ENUM('chưa thanh toán', 'đã thanh toán'),
+      type: DataTypes.ENUM('đã thanh toán', 'chưa thanh toán', 'quá hạn'),
       allowNull: false,
       defaultValue: 'chưa thanh toán'
     },
@@ -68,6 +73,28 @@ module.exports = (sequelize, DataTypes) => {
     feeUpdatedBy: {
       type: DataTypes.STRING,
       allowNull: false
+    },
+    deadline: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: function () {
+        const date = new Date();
+        date.setDate(date.getDate() + 15); // Mặc định 15 ngày kể từ ngày tạo
+        return date;
+      }
+    },
+    lateFee: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+      validate: {
+        min: 0
+      }
+    },
+    isOverdue: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
     }
   }, {
     sequelize,

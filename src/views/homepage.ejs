@@ -189,10 +189,10 @@
 
                 <!-- Chart Initialization Script -->
                 <script>
-                    const chartData = JSON.parse('<%- JSON.stringify(chartData) %>');
+                    const chartData = JSON.parse('<%- JSON.stringify(chartData || {}) %>');
                     const months = Object.keys(chartData).reverse();
-                    const paidData = months.map(month => chartData[month].paid);
-                    const unpaidData = months.map(month => chartData[month].unpaid);
+                    const paidData = months.map(month => chartData[month].paid || 0);
+                    const unpaidData = months.map(month => chartData[month].unpaid || 0);
 
                     const ctx = document.getElementById('spendingChart').getContext('2d');
                     new Chart(ctx, {
@@ -395,7 +395,12 @@
                                                                         <%= user.lastName %>
                                                                 </div>
                                                                 <div class="text-sm text-gray-500">
+                                                                    <i class="fas fa-envelope mr-1"></i>
                                                                     <%= user.email %>
+                                                                </div>
+                                                                <div class="text-sm text-gray-500">
+                                                                    <i class="fas fa-phone mr-1"></i>
+                                                                    <%= user.phoneNumber || 'Chưa cập nhật' %>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -433,10 +438,10 @@
 
                         <!-- Chart Initialization Script -->
                         <script>
-                            const adminChartData = JSON.parse('<%- JSON.stringify(chartData) %>');
+                            const adminChartData = JSON.parse('<%- JSON.stringify(chartData || {}) %>');
                             const adminMonths = Object.keys(adminChartData).reverse();
-                            const adminPaidData = adminMonths.map(month => adminChartData[month].paid);
-                            const adminUnpaidData = adminMonths.map(month => adminChartData[month].unpaid);
+                            const adminPaidData = adminMonths.map(month => adminChartData[month].paid || 0);
+                            const adminUnpaidData = adminMonths.map(month => adminChartData[month].unpaid || 0);
 
                             const adminCtx = document.getElementById('revenueChart').getContext('2d');
                             new Chart(adminCtx, {

@@ -106,6 +106,18 @@
                                         placeholder="Nhập lại mật khẩu">
                                 </div>
 
+                                <div>
+                                    <label class="block text-sm font-medium text-blue-900 mb-2" for="phoneNumber">
+                                        <i class="fas fa-phone mr-2 text-blue-600"></i>Số điện thoại
+                                    </label>
+                                    <input type="tel" id="phoneNumber" name="phoneNumber" required
+                                        pattern="^\+?[0-9]{10,15}$"
+                                        class="form-input w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                        placeholder="Nhập số điện thoại của bạn (VD: 0912345678)">
+                                    <p class="mt-1 text-sm text-gray-500">Định dạng: 10-15 chữ số, có thể bắt đầu bằng
+                                        dấu +</p>
+                                </div>
+
                                 <div class="flex items-center">
                                     <input type="checkbox" id="terms" name="terms" required
                                         class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-blue-300 rounded">
@@ -146,6 +158,8 @@
         document.querySelector('form').addEventListener('submit', function (e) {
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const phoneRegex = /^\+?[0-9]{10,15}$/;
 
             if (password !== confirmPassword) {
                 e.preventDefault();
@@ -156,6 +170,12 @@
             if (password.length < 6) {
                 e.preventDefault();
                 alert('Mật khẩu phải có ít nhất 6 ký tự!');
+                return;
+            }
+
+            if (!phoneRegex.test(phoneNumber)) {
+                e.preventDefault();
+                alert('Số điện thoại không hợp lệ. Vui lòng nhập 10-15 chữ số!');
                 return;
             }
         });

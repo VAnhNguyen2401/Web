@@ -6,7 +6,8 @@ import connectDB from "./config/connectDB";
 import session from "express-session";
 require('dotenv').config();
 
-
+// Import Telegram service
+require('./services/telegramService');
 
 let app = express();
 app.use(bodyParser.json());

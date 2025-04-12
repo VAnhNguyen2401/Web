@@ -15,7 +15,7 @@ const getUserManagementPage = async (req, res) => {
 
 const createUser = async (req, res) => {
     try {
-        const { firstName, lastName, email, password, role } = req.body;
+        const { firstName, lastName, email, password, role, phoneNumber } = req.body;
 
         // Kiểm tra email đã tồn tại chưa
         const existingUser = await db.User.findOne({ where: { email } });
@@ -24,6 +24,16 @@ const createUser = async (req, res) => {
             return res.render('admin/manage-users.ejs', {
                 users,
                 error: "Email đã tồn tại trong hệ thống"
+            });
+        }
+
+        // Validate phone number format
+        const phoneRegex = /^\+?[0-9]{10,15}$/;
+        if (!phoneRegex.test(phoneNumber)) {
+            const users = await db.User.findAll({ order: [['createdAt', 'DESC']] });
+            return res.render('admin/manage-users.ejs', {
+                users,
+                error: "Số điện thoại không hợp lệ. Vui lòng nhập 10-15 chữ số"
             });
         }
 
@@ -36,7 +46,8 @@ const createUser = async (req, res) => {
             lastName,
             email,
             password: hashedPassword,
-            role
+            role,
+            phoneNumber
         });
 
         const users = await db.User.findAll({ order: [['createdAt', 'DESC']] });
@@ -74,8 +85,44 @@ const deleteUser = async (req, res) => {
     }
 };
 
+const updateUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { firstName, lastName, email, phoneNumber, role } = req.body;
+
+        // Validate phone number format
+        const phoneRegex = /^\+?[0-9]{10,15}$/;
+        if (phoneNumber && !phoneRegex.test(phoneNumber)) {
+            req.flash('error', 'Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại từ 10-15 chữ số.');
+            return res.redirect('/admin/users');
+        }
+
+        const user = await db.User.findByPk(id);
+        if (!user) {
+            req.flash('error', 'Không tìm thấy người dùng');
+            return res.redirect('/admin/users');
+        }
+
+        await user.update({
+            firstName,
+            lastName,
+            email,
+            phoneNumber,
+            role
+        });
+
+        req.flash('success', 'Cập nhật thông tin người dùng thành công');
+        res.redirect('/admin/users');
+    } catch (error) {
+        console.error('Error updating user:', error);
+        req.flash('error', 'Đã xảy ra lỗi khi cập nhật thông tin người dùng');
+        res.redirect('/admin/users');
+    }
+};
+
 export default {
     getUserManagementPage,
     createUser,
-    deleteUser
+    deleteUser,
+    updateUser
 }; 

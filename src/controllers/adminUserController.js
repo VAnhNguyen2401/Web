@@ -5,7 +5,7 @@ let getAdminUserPage = async (req, res) => {
     try {
         const users = await db.User.findAll({
             include: [{ model: db.Fee }],
-            attributes: ['id', 'firstName', 'lastName', 'email', 'role', 'createdAt', 'updatedAt']
+            attributes: ['id', 'firstName', 'lastName', 'email', 'role', 'phoneNumber', 'createdAt', 'updatedAt']
         });
 
         // Transform data before sending to view
@@ -29,11 +29,17 @@ let getAdminUserPage = async (req, res) => {
 
 let createUser = async (req, res) => {
     try {
-        const { firstName, lastName, email, password, role } = req.body;
+        const { firstName, lastName, email, password, role, phoneNumber } = req.body;
 
         // Validate input
-        if (!firstName || !lastName || !email || !password) {
+        if (!firstName || !lastName || !email || !password || !phoneNumber) {
             return res.status(400).send("Vui lòng điền đầy đủ thông tin");
+        }
+
+        // Validate phone number format
+        const phoneRegex = /^\+?[0-9]{10,15}$/;
+        if (!phoneRegex.test(phoneNumber)) {
+            return res.status(400).send("Số điện thoại không hợp lệ. Vui lòng nhập 10-15 chữ số");
         }
 
         // Check if email already exists
@@ -52,7 +58,8 @@ let createUser = async (req, res) => {
             lastName,
             email,
             password: hashedPassword,
-            role: role || 'user'
+            role: role || 'user',
+            phoneNumber
         });
 
         return res.status(201).json({ message: "Tạo người dùng thành công", user: newUser });
@@ -65,11 +72,17 @@ let createUser = async (req, res) => {
 let updateUser = async (req, res) => {
     try {
         const userId = req.params.id;
-        const { firstName, lastName, email, role, password } = req.body;
+        const { firstName, lastName, email, role, password, phoneNumber } = req.body;
 
         // Validate input
         if (!firstName || !lastName || !email) {
             return res.status(400).send("Vui lòng điền đầy đủ thông tin");
+        }
+
+        // Validate phone number format
+        const phoneRegex = /^\+?[0-9]{10,15}$/;
+        if (!phoneRegex.test(phoneNumber)) {
+            return res.status(400).send("Số điện thoại không hợp lệ. Vui lòng nhập 10-15 chữ số");
         }
 
         // Check if email already exists for other users
@@ -95,7 +108,8 @@ let updateUser = async (req, res) => {
             firstName,
             lastName,
             email,
-            role: role || user.role // Keep existing role if not provided
+            role: role || user.role, // Keep existing role if not provided
+            phoneNumber // Add phone number to update data
         };
 
         // Add hashed password to update data if provided

@@ -67,7 +67,7 @@ const handleLogin = async (req, res) => {
 };
 
 const handleRegister = async (req, res) => {
-    const { firstName, lastName, email, password, confirmPassword } = req.body;
+    const { firstName, lastName, email, password, confirmPassword, phoneNumber } = req.body;
 
     try {
         // Kiểm tra mật khẩu xác nhận
@@ -82,6 +82,15 @@ const handleRegister = async (req, res) => {
         if (password.length < 6) {
             return res.render('register.ejs', {
                 error: 'Mật khẩu phải có ít nhất 6 ký tự',
+                success: null
+            });
+        }
+
+        // Kiểm tra định dạng số điện thoại
+        const phoneRegex = /^\+?[0-9]{10,15}$/;
+        if (!phoneRegex.test(phoneNumber)) {
+            return res.render('register.ejs', {
+                error: 'Số điện thoại không hợp lệ. Vui lòng nhập 10-15 chữ số',
                 success: null
             });
         }
@@ -103,11 +112,12 @@ const handleRegister = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         // Tạo người dùng mới
-        await db.User.create({
+        const newUser = await db.User.create({
             firstName,
             lastName,
             email,
             password: hashedPassword,
+            phoneNumber,
             role: 'user'
         });
 

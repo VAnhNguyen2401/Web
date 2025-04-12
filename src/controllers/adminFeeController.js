@@ -1,4 +1,5 @@
 import db from "../models";
+const telegramService = require('../services/telegramService');
 
 let getAdminFeePage = async (req, res) => {
     try {
@@ -43,8 +44,12 @@ let createFee = async (req, res) => {
             return res.status(400).send("Vui lòng điền đầy đủ thông tin");
         }
 
+        // Tính deadline (ví dụ: 30 ngày từ ngày tạo)
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 30);
+
         // Create new fee with user association
-        await db.Fee.create({
+        const newFee = await db.Fee.create({
             feeType: feeName,
             feeAmount: parseFloat(feeAmount),
             feeDescription: feeDescription || '',
@@ -54,8 +59,20 @@ let createFee = async (req, res) => {
             feeCreatedAt: new Date(),
             feeUpdatedAt: new Date(),
             feeCreatedBy: req.session.user.email,
-            feeUpdatedBy: req.session.user.email
+            feeUpdatedBy: req.session.user.email,
+            deadline: dueDate
         });
+
+        // Gửi thông báo qua Telegram
+        try {
+            await telegramService.sendNewFeeNotification(userId, {
+                feeType: feeName,
+                feeAmount: parseFloat(feeAmount),
+                dueDate: dueDate
+            });
+        } catch (telegramError) {
+            console.error('Error sending Telegram notification:', telegramError);
+        }
 
         return res.redirect('/admin/fee');
     } catch (e) {

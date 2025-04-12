@@ -145,7 +145,8 @@
                                                 </div>
                                             </div>
                                             <div class="flex items-center space-x-2">
-                                                <button onclick="editUser('<%= user.id %>')"
+                                                <button
+                                                    onclick="editUser('<%= user.id %>', '<%= user.firstName %>', '<%= user.lastName %>', '<%= user.email %>', '<%= user.role %>', '<%= user.phoneNumber %>')"
                                                     class="p-2 text-blue-600 hover:text-blue-800 transition-colors">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
@@ -212,6 +213,13 @@
                         <p class="mt-1 text-xs text-gray-500">Địa chỉ email hợp lệ</p>
                     </div>
                     <div>
+                        <label class="block text-sm font-medium text-gray-700">Số điện thoại <span
+                                class="text-red-500">*</span></label>
+                        <input type="tel" name="phoneNumber" required pattern="^\+?[0-9]{10,15}$"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <p class="mt-1 text-xs text-gray-500">Định dạng: 10-15 chữ số, có thể bắt đầu bằng dấu +</p>
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium text-gray-700">Mật khẩu <span
                                 class="text-red-500">*</span></label>
                         <input type="password" name="password" required minlength="6"
@@ -249,6 +257,54 @@
         </div>
     </div>
 
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">Cập nhật thông tin người dùng</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm" method="POST">
+                        <input type="hidden" id="editUserId" name="userId">
+                        <div class="form-group">
+                            <label for="editFirstName">Họ</label>
+                            <input type="text" class="form-control" id="editFirstName" name="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editLastName">Tên</label>
+                            <input type="text" class="form-control" id="editLastName" name="lastName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editEmail">Email</label>
+                            <input type="email" class="form-control" id="editEmail" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPhoneNumber">Số điện thoại</label>
+                            <input type="tel" class="form-control" id="editPhoneNumber" name="phoneNumber"
+                                pattern="^\+?[0-9]{10,15}$" placeholder="VD: +84123456789" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editRole">Vai trò</label>
+                            <select class="form-control" id="editRole" name="role" required>
+                                <option value="user">Người dùng</option>
+                                <option value="admin">Quản trị viên</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" onclick="updateUser()">Cập nhật</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-white/80 backdrop-blur-sm mt-12 border-t border-blue-100">
         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -259,65 +315,207 @@
     </footer>
 
     <script>
-        function showAddUserModal() {
-            document.getElementById('addUserModal').classList.remove('hidden');
-            // Reset form when showing modal
-            document.getElementById('addUserForm').reset();
+        // Modal controls
+        const modal = document.getElementById('addUserModal');
+        const openModalBtn = document.getElementById('showAddUserModal');
+        const closeModalBtn = document.getElementById('closeAddUserModal');
+        const form = document.getElementById('addUserForm');
+        const modalTitle = document.getElementById('modalTitle');
+        const submitBtn = document.getElementById('submitBtn');
+        const passwordGroup = document.getElementById('passwordGroup');
+        const passwordInput = document.getElementById('password');
+        const passwordHint = document.getElementById('passwordHint');
+        let isEditMode = false;
+
+        function editUser(userId, firstName, lastName, email, role, phoneNumber) {
+            document.getElementById('userId').value = userId;
+            document.getElementById('firstName').value = firstName;
+            document.getElementById('lastName').value = lastName;
+            document.getElementById('email').value = email;
+            document.getElementById('role').value = role;
+            document.getElementById('phoneNumber').value = phoneNumber || '';
+
+            // Set edit mode
+            isEditMode = true;
+            modalTitle.textContent = 'Chỉnh sửa thông tin người dùng';
+            submitBtn.textContent = 'Lưu thay đổi';
+            passwordInput.required = false;
+            passwordHint.textContent = 'Để trống nếu không muốn thay đổi mật khẩu';
+            document.getElementById('email').readOnly = true;
+
+            // Show modal
+            modal.classList.remove('hidden');
         }
 
-        function closeAddUserModal() {
-            document.getElementById('addUserModal').classList.add('hidden');
+        function closeModal() {
+            modal.classList.add('hidden');
+            resetForm();
         }
 
-        function validateForm() {
-            const form = document.getElementById('addUserForm');
-            const password = form.querySelector('input[name="password"]').value;
-            const confirmPassword = form.querySelector('input[name="confirmPassword"]').value;
+        function resetForm() {
+            form.reset();
+            document.getElementById('userId').value = '';
+            isEditMode = false;
+            modalTitle.textContent = 'Thêm người dùng mới';
+            submitBtn.textContent = 'Thêm người dùng';
+            passwordInput.required = true;
+            passwordHint.textContent = '';
+            document.getElementById('email').readOnly = false;
+        }
 
-            if (password !== confirmPassword) {
-                alert('Mật khẩu xác nhận không khớp!');
-                return false;
+        // Form submission
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            const userId = data.userId;
+            delete data.userId;
+
+            // Validate required fields
+            if (!data.firstName || !data.lastName || !data.email || !data.phoneNumber) {
+                alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+                return;
             }
 
-            return true;
-        }
+            // Validate phone number format
+            const phoneRegex = /^\+?[0-9]{10,15}$/;
+            if (!phoneRegex.test(data.phoneNumber)) {
+                alert('Số điện thoại không hợp lệ. Vui lòng nhập 10-15 chữ số');
+                return;
+            }
 
-        function deleteUser(userId) {
-            if (confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
-                fetch(`/admin/user/${userId}`, {
-                    method: 'DELETE',
-                })
-                    .then(response => {
+            // Validate password for new user
+            if (!isEditMode && !data.password) {
+                alert('Vui lòng nhập mật khẩu cho người dùng mới');
+                return;
+            }
+
+            // Remove password if it's empty in edit mode
+            if (isEditMode && !data.password) {
+                delete data.password;
+            }
+
+            try {
+                const url = isEditMode ? `/admin/user/${userId}` : '/admin/user';
+                const method = isEditMode ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert(isEditMode ? 'Cập nhật thông tin thành công!' : 'Thêm người dùng thành công!');
+                    window.location.reload();
+                } else {
+                    const error = await response.text();
+                    alert(error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Đã xảy ra lỗi khi xử lý yêu cầu');
+            }
+        });
+
+        // Delete user
+        document.querySelectorAll('.delete-user-btn').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                e.preventDefault();
+                if (confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
+                    const userId = button.dataset.userId;
+                    try {
+                        const response = await fetch(`/admin/user/${userId}`, {
+                            method: 'DELETE'
+                        });
+
                         if (response.ok) {
                             window.location.reload();
                         } else {
-                            response.json().then(data => {
-                                alert(data.error || 'Có lỗi xảy ra khi xóa người dùng');
-                            });
+                            const error = await response.text();
+                            alert(error);
                         }
-                    })
-                    .catch(error => {
+                    } catch (error) {
                         console.error('Error:', error);
-                        alert('Có lỗi xảy ra khi xóa người dùng');
-                    });
+                        alert('Đã xảy ra lỗi khi xóa người dùng');
+                    }
+                }
+            });
+        });
+
+        // Event listeners
+        openModalBtn.addEventListener('click', () => {
+            resetForm();
+            modal.classList.remove('hidden');
+        });
+
+        closeModalBtn.addEventListener('click', closeModal);
+
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        function openEditModal(userId) {
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                document.getElementById('editUserId').value = user.id;
+                document.getElementById('editFirstName').value = user.firstName;
+                document.getElementById('editLastName').value = user.lastName;
+                document.getElementById('editEmail').value = user.email;
+                document.getElementById('editPhoneNumber').value = user.phoneNumber || '';
+                document.getElementById('editRole').value = user.role;
+                $('#editUserModal').modal('show');
             }
         }
 
-        // Auto-hide success/error messages after 5 seconds
-        setTimeout(() => {
-            const successAlert = document.getElementById('successAlert');
-            const errorAlert = document.getElementById('errorAlert');
+        async function updateUser() {
+            const userId = document.getElementById('editUserId').value;
+            const firstName = document.getElementById('editFirstName').value;
+            const lastName = document.getElementById('editLastName').value;
+            const email = document.getElementById('editEmail').value;
+            const phoneNumber = document.getElementById('editPhoneNumber').value;
+            const role = document.getElementById('editRole').value;
 
-            if (successAlert) successAlert.remove();
-            if (errorAlert) errorAlert.remove();
-        }, 5000);
-
-        // Close modal when clicking outside
-        window.onclick = function (event) {
-            const modal = document.getElementById('addUserModal');
-            if (event.target == modal) {
-                closeAddUserModal();
+            if (!validatePhoneNumber(phoneNumber)) {
+                alert('Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại từ 10-15 chữ số, có thể bắt đầu bằng dấu +');
+                return;
             }
+
+            try {
+                const response = await fetch(`/admin/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        firstName,
+                        lastName,
+                        email,
+                        phoneNumber,
+                        role
+                    })
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const data = await response.json();
+                    alert(data.message || 'Có lỗi xảy ra khi cập nhật thông tin người dùng');
+                }
+            } catch (error) {
+                alert('Có lỗi xảy ra khi cập nhật thông tin người dùng');
+            }
+        }
+
+        function validatePhoneNumber(phoneNumber) {
+            const phoneRegex = /^\+?[0-9]{10,15}$/;
+            return phoneRegex.test(phoneNumber);
         }
     </script>
 </body>

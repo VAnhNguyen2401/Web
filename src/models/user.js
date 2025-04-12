@@ -42,6 +42,17 @@ module.exports = (sequelize, DataTypes) => {
     resetPasswordExpires: {
       type: DataTypes.BIGINT,
       allowNull: true
+    },
+    phoneNumber: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        is: /^\+?[0-9]{10,15}$/ // Định dạng số điện thoại quốc tế
+      }
+    },
+    telegramChatId: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     sequelize,
