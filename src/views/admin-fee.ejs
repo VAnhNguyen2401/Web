@@ -127,9 +127,16 @@
                         <label class="block text-sm font-medium text-blue-900 mb-2" for="feeAmount">
                             <i class="fas fa-money-bill mr-2 text-blue-600"></i>Số tiền
                         </label>
-                        <input type="number" name="feeAmount" id="feeAmount" required min="0" step="1000"
-                            class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 text-base py-3"
-                            placeholder="Nhập số tiền...">
+                        <div class="relative">
+                            <!-- Ô nhập số tiền -->
+                            <div class="flex items-center">
+                                <input type="text" id="feeAmount" name="feeAmount" required
+                                    class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 text-base py-3"
+                                    placeholder="Nhập số tiền..." oninput="formatCurrency(this)">
+
+                                <div class="ml-2 text-sm text-blue-700 font-medium" id="amountPreview"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <div>
@@ -139,14 +146,124 @@
                         <textarea name="feeDescription" id="feeDescription"
                             class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200"
                             placeholder="Nhập mô tả..."></textarea>
+                        <div class="mt-2 flex justify-end">
+                            <button type="button" onclick="updateFeeDescription()"
+                                class="text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                                <i class="fas fa-magic mr-1"></i>Tạo mô tả tự động
+                            </button>
+                        </div>
                     </div>
 
                     <div class="md:col-span-2 lg:col-span-4 flex justify-end">
-                        <button type="submit"
-                            class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-2 rounded-lg transition duration-200 flex items-center shadow-lg hover:shadow-xl">
+                        <button type="submit" id="submitBtn"
+                            class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-2 rounded-lg transition duration-200 flex items-center shadow-lg hover:shadow-xl"
+                            onclick="validateForm(event)">
                             <i class="fas fa-plus mr-2"></i> Tạo khoản thu
                         </button>
                     </div>
+
+                    <script>
+                        // Định dạng tiền tệ
+                        function formatCurrency(input) {
+                            // Xóa tất cả ký tự không phải số
+                            let value = input.value.replace(/\D/g, '');
+                            input.value = value;
+
+                            // Hiển thị định dạng số
+                            const formattedValue = new Intl.NumberFormat('vi-VN').format(value);
+                            document.getElementById('amountPreview').textContent = formattedValue + ' đ';
+
+                            // Cập nhật mô tả nếu đã có
+                            if (document.getElementById("feeDescription").value) {
+                                updateFeeDescription();
+                            }
+                        }
+
+                        // Kiểm tra form trước khi gửi
+                        function validateForm(event) {
+                            const feeType = document.getElementById("feeName").value;
+                            const userId = document.getElementById("userId").value;
+                            const feeAmount = document.getElementById("feeAmount").value;
+
+                            if (!feeType) {
+                                event.preventDefault();
+                                alert("Vui lòng chọn loại khoản thu");
+                                return false;
+                            }
+
+                            if (!userId) {
+                                event.preventDefault();
+                                alert("Vui lòng chọn người dùng");
+                                return false;
+                            }
+
+                            if (!feeAmount || parseFloat(feeAmount) <= 0) {
+                                event.preventDefault();
+                                alert("Vui lòng nhập số tiền hợp lệ");
+                                document.getElementById("feeAmount").focus();
+                                return false;
+                            }
+
+                            return true;
+                        }
+
+                        // Cập nhật mô tả để bao gồm hạn thanh toán
+                        function updateFeeDescription() {
+                            const feeType = document.getElementById("feeName").value;
+                            const feeAmount = document.getElementById("feeAmount").value;
+                            const feeDescription = document.getElementById("feeDescription");
+
+                            if (!feeType) {
+                                alert("Vui lòng chọn loại khoản thu trước");
+                                return;
+                            }
+
+                            let description = "";
+                            const currentMonth = new Date().getMonth() + 1;
+                            const currentYear = new Date().getFullYear();
+
+                            // Format số tiền
+                            const formattedAmount = parseInt(feeAmount).toLocaleString('vi-VN');
+
+                            // Tạo mô tả dựa trên loại phí
+                            switch (feeType) {
+                                case "Phí quản lý":
+                                    description = `Phí quản lý tháng ${currentMonth}/${currentYear} - ${formattedAmount} VND`;
+                                    break;
+                                case "Phí gửi xe":
+                                    description = `Phí gửi xe tháng ${currentMonth}/${currentYear} - ${formattedAmount} VND`;
+                                    break;
+                                case "Phí điện":
+                                    description = `Tiền điện tháng ${currentMonth}/${currentYear} - ${formattedAmount} VND`;
+                                    break;
+                                case "Phí nước":
+                                    description = `Tiền nước tháng ${currentMonth}/${currentYear} - ${formattedAmount} VND`;
+                                    break;
+                                case "Phí internet":
+                                    description = `Phí internet tháng ${currentMonth}/${currentYear} - ${formattedAmount} VND`;
+                                    break;
+                                case "Phí vệ sinh":
+                                    description = `Phí vệ sinh tháng ${currentMonth}/${currentYear} - ${formattedAmount} VND`;
+                                    break;
+                                case "Phí bảo trì":
+                                    description = `Phí bảo trì - Thanh toán ngày ${new Date().getDate()}/${currentMonth}/${currentYear} - ${formattedAmount} VND`;
+                                    break;
+                                case "Phí bảo vệ":
+                                    description = `Phí bảo vệ tháng ${currentMonth}/${currentYear} - ${formattedAmount} VND`;
+                                    break;
+                                default:
+                                    description = `${feeType} - Số tiền: ${formattedAmount} VND - Tháng ${currentMonth}/${currentYear}`;
+                            }
+
+                            feeDescription.value = description;
+                        }
+
+                        // Khởi tạo ban đầu
+                        window.onload = function () {
+                            // Set focus to fee amount input
+                            document.getElementById('feeAmount').focus();
+                        };
+                    </script>
                 </form>
             </div>
 

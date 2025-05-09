@@ -6,8 +6,24 @@ import connectDB from "./config/connectDB";
 import session from "express-session";
 require('dotenv').config();
 
-// Import Telegram service
-require('./services/telegramService');
+// Tắt console log không cần thiết
+const originalConsoleLog = console.log;
+console.log = function (msg) {
+    // Bỏ qua các thông báo không cần thiết
+    if (typeof msg === 'string' && (
+        msg.includes('Executing (default):') ||
+        msg.includes('User found:') ||
+        msg.includes('Session details:') ||
+        msg.includes('Redirecting') ||
+        msg.includes('Attempting login')
+    )) {
+        return; // Bỏ qua thông báo
+    }
+    originalConsoleLog.apply(console, arguments);
+};
+
+// Tắt thông báo Telegram bot
+const telegramService = require('./services/telegramService');
 
 let app = express();
 app.use(bodyParser.json());
@@ -33,4 +49,4 @@ let port = process.env.PORT || 6969;
 
 app.listen(port, () => {
     console.log("Backend Nodejs is running on the port: " + port);
-})
+});

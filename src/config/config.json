@@ -1,24 +1,44 @@
 {
   "development": {
-    "username": "root",
-    "password": null,
-    "database": "qldc",
-    "host": "127.0.0.1",
-    "dialect": "mysql",
-    "logging": false
+    "username": "sa",
+    "password": "Vietanh24",
+    "database": "Quanli",
+    "host": "DESKTOP-D7SSCQ5",
+    "dialect": "mssql",
+    "logging": false,
+    "dialectOptions": {
+      "options": {
+        "encrypt": true,
+        "trustServerCertificate": true
+      }
+    }
   },
   "test": {
-    "username": "root",
-    "password": null,
-    "database": "database_test",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
+    "username": "sa",
+    "password": "Vietanh24",
+    "database": "Quanli",
+    "host": "DESKTOP-D7SSCQ5",
+    "dialect": "mssql",
+    "logging": false,
+    "dialectOptions": {
+      "options": {
+        "encrypt": true,
+        "trustServerCertificate": true
+      }
+    }
   },
   "production": {
-    "username": "root",
-    "password": null,
-    "database": "database_production",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
+    "username": "sa",
+    "password": "Vietanh24",
+    "database": "Quanli",
+    "host": "DESKTOP-D7SSCQ5",
+    "dialect": "mssql",
+    "logging": false,
+    "dialectOptions": {
+      "options": {
+        "encrypt": true,
+        "trustServerCertificate": true
+      }
+    }
   }
 }
