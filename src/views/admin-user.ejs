@@ -36,6 +36,10 @@
                     </a>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <a href="/admin/apartment"
+                        class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                        <i class="fas fa-building mr-2"></i>Quản lý căn hộ
+                    </a>
                     <a href="/admin/fee"
                         class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
                         <i class="fas fa-money-bill mr-2"></i>Quản lý thu phí
@@ -100,6 +104,23 @@
                                     <%= user.role==='admin' ? 'Quản trị viên' : 'Người dùng' %>
                                 </span>
                             </div>
+
+                            <!-- Thông tin căn hộ -->
+                            <div class="flex items-center text-sm">
+                                <span class="w-24 text-gray-500">Căn hộ:</span>
+                                <div class="flex-1">
+                                    <% if (user.apartment) { %>
+                                        <span
+                                            class="px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full font-medium">
+                                            <i class="fas fa-building mr-1"></i>
+                                            <%= user.apartment.id %>
+                                        </span>
+                                        <% } else { %>
+                                            <span class="text-gray-500 italic">Chưa sở hữu căn hộ</span>
+                                            <% } %>
+                                </div>
+                            </div>
+
                             <div class="flex items-center text-sm">
                                 <span class="w-24 text-gray-500">ID:</span>
                                 <span class="text-gray-700">

@@ -55,7 +55,10 @@
                     </a>
                 </div>
                 <div class="flex items-center space-x-4">
-
+                    <a href="/admin/apartment"
+                        class="nav-link px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                        <i class="fas fa-building mr-2"></i>Quản lý căn hộ
+                    </a>
                     <a href="/admin/user"
                         class="nav-link px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
                         <i class="fas fa-users-cog mr-2"></i>Quản lý người dùng
@@ -91,36 +94,62 @@
                         <label class="block text-sm font-medium text-blue-900 mb-2" for="feeName">
                             <i class="fas fa-file-invoice mr-2 text-blue-600"></i>Loại khoản thu
                         </label>
-                        <select name="feeName" id="feeName" required
+                        <select name="feeName" id="feeName" required onchange="handleFeeTypeChange()"
                             class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 text-base py-3">
                             <option value="">Chọn loại khoản thu...</option>
+                            <option value="Phí dịch vụ">Phí dịch vụ</option>
                             <option value="Phí quản lý">Phí quản lý</option>
                             <option value="Phí gửi xe">Phí gửi xe</option>
                             <option value="Phí điện">Phí điện</option>
                             <option value="Phí nước">Phí nước</option>
                             <option value="Phí internet">Phí internet</option>
-                            <option value="Phí vệ sinh">Phí vệ sinh</option>
-                            <option value="Phí bảo trì">Phí bảo trì</option>
-                            <option value="Phí bảo vệ">Phí bảo vệ</option>
+
                             <option value="Phí khác">Phí khác</option>
                         </select>
+                        <div id="serviceFeeInfo"
+                            class="hidden mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm">
+                            <i class="fas fa-info-circle text-green-600 mr-1"></i>
+                            <span class="text-green-800">Phí dịch vụ sẽ được tự động tính theo diện tích căn hộ × 16,500
+                                VNĐ/m²</span>
+                        </div>
                     </div>
 
-                    <div>
+                    <div id="userSelection">
                         <label class="block text-sm font-medium text-blue-900 mb-2" for="userId">
                             <i class="fas fa-user mr-2 text-blue-600"></i>Chọn người dùng
                         </label>
-                        <select name="userId" id="userId" required
+                        <select name="userId" id="userId" required onchange="handleUserChange()"
                             class="w-full rounded-lg border-blue-200 bg-white/50 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 text-base py-3">
                             <option value="">Chọn người dùng...</option>
                             <% users.forEach(user=> { %>
                                 <% if (user.role !=='admin' ) { %>
                                     <option value="<%= user.id %>">
                                         <%= user.fullName %> (<%= user.email %>)
+                                                <% if (user.apartment) { %>
+                                                    - <%= user.apartment.id %>
+                                                        <% } %>
                                     </option>
                                     <% } %>
                                         <% }) %>
                         </select>
+                    </div>
+
+                    <!-- Thông báo phí internet cho tất cả căn hộ -->
+                    <div id="internetFeeNotice" class="hidden">
+                        <label class="block text-sm font-medium text-blue-900 mb-2">
+                            <i class="fas fa-wifi mr-2 text-blue-600"></i>Phí internet cho tất cả căn hộ
+                        </label>
+                        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div class="flex items-center text-blue-800">
+                                <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                                <span class="font-medium">Sẽ tạo phí internet 150,000 VNĐ cho TẤT CẢ căn hộ có chủ sở
+                                    hữu</span>
+                            </div>
+                            <div class="mt-2 text-sm text-blue-700">
+                                <i class="fas fa-clock mr-1"></i>
+                                Tháng <span id="currentMonth"></span>/<span id="currentYear"></span>
+                            </div>
+                        </div>
                     </div>
 
                     <div>
@@ -155,16 +184,66 @@
                     </div>
 
                     <div class="md:col-span-2 lg:col-span-4 flex justify-end">
-                        <button type="submit" id="submitBtn"
+                        <button type="button" id="submitBtn"
                             class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-2 rounded-lg transition duration-200 flex items-center shadow-lg hover:shadow-xl"
-                            onclick="validateForm(event)">
-                            <i class="fas fa-plus mr-2"></i> Tạo khoản thu
+                            onclick="handleFormSubmit(event)">
+                            <i class="fas fa-plus mr-2"></i> <span id="submitBtnText">Tạo khoản thu</span>
                         </button>
                     </div>
 
                     <script>
+                        function editUser(userId, firstName, lastName, email, phoneNumber, role) {
+                            document.getElementById('editUserId').value = userId;
+                            document.getElementById('editFirstName').value = firstName;
+                            document.getElementById('editLastName').value = lastName;
+                            document.getElementById('editEmail').value = email;
+                            document.getElementById('editPhoneNumber').value = phoneNumber || '';
+                            document.getElementById('editRole').value = role || 'user';
+                            openEditUserModal();
+                        }
+
+                        function closeEditUserModal() {
+                            document.getElementById('editUserModal').classList.add('hidden');
+                        }
+
+                        document.getElementById('editUserForm').addEventListener('submit', async function (e) {
+                            e.preventDefault();
+                            const userId = document.getElementById('editUserId').value;
+                            const formData = {
+                                firstName: document.getElementById('editFirstName').value,
+                                lastName: document.getElementById('editLastName').value,
+                                email: document.getElementById('editEmail').value,
+                                phoneNumber: document.getElementById('editPhoneNumber').value,
+                                role: document.getElementById('editRole').value
+                            };
+
+                            try {
+                                const response = await fetch(`/admin/user/${userId}`, {
+                                    method: 'PUT',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify(formData)
+                                });
+
+                                if (response.ok) {
+                                    window.location.reload();
+                                } else {
+                                    const error = await response.text();
+                                    alert(error);
+                                }
+                            } catch (error) {
+                                alert('Có lỗi xảy ra khi cập nhật thông tin người dùng');
+                            }
+                        });
+
                         // Định dạng tiền tệ
                         function formatCurrency(input) {
+                            // Không xử lý nếu field đang readonly (đối với phí dịch vụ hoặc phí internet)
+                            if (input.readOnly) {
+                                return;
+                            }
+
                             // Xóa tất cả ký tự không phải số
                             let value = input.value.replace(/\D/g, '');
                             input.value = value;
@@ -185,6 +264,8 @@
                             const userId = document.getElementById("userId").value;
                             const feeAmount = document.getElementById("feeAmount").value;
 
+                            console.log('Validating form:', { feeType, userId, feeAmount });
+
                             if (!feeType) {
                                 event.preventDefault();
                                 alert("Vui lòng chọn loại khoản thu");
@@ -197,6 +278,29 @@
                                 return false;
                             }
 
+                            // Đối với phí dịch vụ, kiểm tra xem đã tính toán được chưa
+                            if (feeType === 'Phí dịch vụ') {
+                                if (!feeAmount || feeAmount === '' || parseFloat(feeAmount) <= 0) {
+                                    event.preventDefault();
+                                    alert("Phí dịch vụ chưa được tính toán. Vui lòng chọn user có căn hộ.");
+                                    return false;
+                                }
+                                console.log('Service fee validation passed:', feeAmount);
+                                return true;
+                            }
+
+                            // Đối với phí internet, số tiền đã được tự động điền
+                            if (feeType === 'Phí internet') {
+                                if (feeAmount !== '150000') {
+                                    event.preventDefault();
+                                    alert("Lỗi: Phí internet phải là 150,000 VNĐ");
+                                    return false;
+                                }
+                                console.log('Internet fee validation passed:', feeAmount);
+                                return true;
+                            }
+
+                            // Đối với các loại phí khác, yêu cầu nhập số tiền
                             if (!feeAmount || parseFloat(feeAmount) <= 0) {
                                 event.preventDefault();
                                 alert("Vui lòng nhập số tiền hợp lệ");
@@ -204,6 +308,7 @@
                                 return false;
                             }
 
+                            console.log('Form validation passed');
                             return true;
                         }
 
@@ -227,6 +332,9 @@
 
                             // Tạo mô tả dựa trên loại phí
                             switch (feeType) {
+                                case "Phí dịch vụ":
+                                    description = `Phí dịch vụ tháng ${currentMonth}/${currentYear} - ${formattedAmount} VND`;
+                                    break;
                                 case "Phí quản lý":
                                     description = `Phí quản lý tháng ${currentMonth}/${currentYear} - ${formattedAmount} VND`;
                                     break;
@@ -258,11 +366,237 @@
                             feeDescription.value = description;
                         }
 
+                        // Xử lý khi thay đổi loại phí
+                        function handleFeeTypeChange() {
+                            const feeType = document.getElementById('feeName').value;
+                            const serviceFeeInfo = document.getElementById('serviceFeeInfo');
+                            const userSelection = document.getElementById('userSelection');
+                            const internetFeeNotice = document.getElementById('internetFeeNotice');
+                            const amountField = document.getElementById('feeAmount');
+                            const amountPreview = document.getElementById('amountPreview');
+                            const submitBtnText = document.getElementById('submitBtnText');
+
+                            console.log('Fee type changed to:', feeType);
+
+                            if (feeType === 'Phí dịch vụ') {
+                                serviceFeeInfo.classList.remove('hidden');
+                                userSelection.classList.remove('hidden');
+                                internetFeeNotice.classList.add('hidden');
+                                submitBtnText.textContent = 'Tạo khoản thu';
+
+                                console.log('Service fee selected, setting up field...');
+                                // Thiết lập field cho phí dịch vụ
+                                amountField.value = '';
+                                amountField.placeholder = 'Chọn user để tự động tính phí...';
+                                amountField.readOnly = true;
+                                amountPreview.textContent = '';
+                                // Tự động tính nếu đã chọn user
+                                calculateServiceFee();
+
+                            } else if (feeType === 'Phí internet') {
+                                serviceFeeInfo.classList.add('hidden');
+                                userSelection.classList.add('hidden');
+                                internetFeeNotice.classList.remove('hidden');
+                                submitBtnText.textContent = 'Tạo phí internet cho tất cả căn hộ';
+
+                                console.log('Internet fee selected, setting up for all apartments...');
+                                // Phí internet cho tất cả căn hộ
+                                amountField.value = '150000';
+                                amountField.readOnly = true;
+                                amountField.placeholder = '';
+                                amountPreview.textContent = '150,000 đ × Tất cả căn hộ';
+
+                                // Hiển thị tháng/năm hiện tại
+                                const currentMonth = new Date().getMonth() + 1;
+                                const currentYear = new Date().getFullYear();
+                                document.getElementById('currentMonth').textContent = currentMonth;
+                                document.getElementById('currentYear').textContent = currentYear;
+                                document.getElementById('feeDescription').value = `Phí internet tháng ${currentMonth}/${currentYear} - 150,000 VNĐ cho tất cả căn hộ`;
+
+                            } else {
+                                serviceFeeInfo.classList.add('hidden');
+                                userSelection.classList.remove('hidden');
+                                internetFeeNotice.classList.add('hidden');
+                                submitBtnText.textContent = 'Tạo khoản thu';
+
+                                console.log('Other fee type selected, enabling manual input');
+                                // Reset cho các loại phí khác
+                                amountField.readOnly = false;
+                                amountField.placeholder = 'Nhập số tiền...';
+                                amountField.value = '';
+                                amountPreview.textContent = '';
+                                document.getElementById('feeDescription').value = '';
+                            }
+                        }
+
+                        // Xử lý khi thay đổi user
+                        function handleUserChange() {
+                            const feeType = document.getElementById('feeName').value;
+                            const userId = document.getElementById('userId').value;
+
+                            console.log('User changed to:', userId, 'Fee type:', feeType);
+
+                            if (feeType === 'Phí dịch vụ') {
+                                console.log('Calculating service fee for selected user...');
+                                calculateServiceFee();
+                            }
+                        }
+
+                        // Tính phí dịch vụ tự động
+                        async function calculateServiceFee() {
+                            const userId = document.getElementById('userId').value;
+                            const feeType = document.getElementById('feeName').value;
+                            const amountField = document.getElementById('feeAmount');
+                            const amountPreview = document.getElementById('amountPreview');
+                            const serviceFeeInfo = document.getElementById('serviceFeeInfo');
+
+                            console.log('calculateServiceFee called - userId:', userId, 'feeType:', feeType);
+
+                            // Kiểm tra loại phí
+                            if (feeType !== 'Phí dịch vụ') {
+                                console.log('Not service fee type, exiting...');
+                                return;
+                            }
+
+                            // Nếu chưa chọn user
+                            if (!userId) {
+                                console.log('No user selected');
+                                amountField.value = '';
+                                amountField.placeholder = 'Chọn user để tự động tính phí...';
+                                amountPreview.textContent = '';
+                                serviceFeeInfo.innerHTML = `
+                                    <i class="fas fa-info-circle text-blue-600 mr-1"></i>
+                                    <span class="text-blue-800">Chọn user để tự động tính phí dịch vụ (16,500 VNĐ/m²)</span>
+                                `;
+                                return;
+                            }
+
+                            try {
+                                console.log('Fetching apartment info for user:', userId);
+                                amountField.placeholder = 'Đang tính toán...';
+                                amountField.value = '';
+                                amountPreview.textContent = '';
+
+                                const response = await fetch(`/admin/fee/user-apartment/${userId}`);
+                                const result = await response.json();
+
+                                console.log('API Response:', result);
+
+                                if (response.ok && result.success) {
+                                    const serviceFeeAmount = result.serviceFee.amount;
+
+                                    console.log('Success! Calculated service fee:', serviceFeeAmount);
+
+                                    // Hiển thị số tiền trong ô input
+                                    amountField.value = serviceFeeAmount.toString();
+                                    amountField.placeholder = '';
+                                    amountPreview.textContent = serviceFeeAmount.toLocaleString('vi-VN') + ' đ';
+
+                                    // Tự động tạo mô tả
+                                    const currentMonth = new Date().getMonth() + 1;
+                                    const currentYear = new Date().getFullYear();
+                                    const description = `Phí dịch vụ tháng ${currentMonth}/${currentYear} - Căn hộ ${result.apartment.id} (${result.serviceFee.calculation})`;
+                                    document.getElementById('feeDescription').value = description;
+
+                                    // Hiển thị thông tin tính toán
+                                    serviceFeeInfo.innerHTML = `
+                                        <i class="fas fa-check-circle text-green-600 mr-1"></i>
+                                        <span class="text-green-800">
+                                            <strong>Căn hộ ${result.apartment.id}:</strong> ${result.serviceFee.calculation} = 
+                                            <strong style="color: #059669;">${serviceFeeAmount.toLocaleString('vi-VN')} VNĐ</strong>
+                                        </span>
+                                    `;
+
+                                } else {
+                                    console.log('User has no apartment or error:', result.error);
+                                    amountField.value = '';
+                                    amountField.placeholder = 'User chưa có căn hộ';
+                                    amountPreview.textContent = '';
+
+                                    serviceFeeInfo.innerHTML = `
+                                        <i class="fas fa-exclamation-triangle text-orange-600 mr-1"></i>
+                                        <span class="text-orange-800">${result.error || 'User này chưa có căn hộ để tính phí dịch vụ'}</span>
+                                    `;
+                                }
+
+                            } catch (error) {
+                                console.error('Error fetching apartment info:', error);
+                                amountField.value = '';
+                                amountField.placeholder = 'Lỗi kết nối';
+                                amountPreview.textContent = '';
+
+                                serviceFeeInfo.innerHTML = `
+                                    <i class="fas fa-exclamation-triangle text-red-600 mr-1"></i>
+                                    <span class="text-red-800">Lỗi kết nối: ${error.message}</span>
+                                `;
+                            }
+                        }
+
+                        // Xử lý submit form
+                        async function handleFormSubmit(event) {
+                            event.preventDefault();
+
+                            const feeType = document.getElementById("feeName").value;
+
+                            if (feeType === 'Phí internet') {
+                                await createInternetFeeForAll();
+                            } else {
+                                // Validate và submit form thông thường
+                                if (validateForm(event)) {
+                                    document.querySelector('form').submit();
+                                }
+                            }
+                        }
+
+                        // Tạo phí internet cho tất cả căn hộ
+                        async function createInternetFeeForAll() {
+                            const submitBtn = document.getElementById('submitBtn');
+                            const originalText = submitBtn.innerHTML;
+
+                            try {
+                                // Disable button và hiển thị loading
+                                submitBtn.disabled = true;
+                                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang tạo phí...';
+
+                                const response = await fetch('/admin/fee/internet-for-all', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+
+                                const result = await response.json();
+
+                                if (response.ok && result.success) {
+                                    alert(`✅ Thành công!\n\n${result.message}\n\nTổng cộng: ${result.summary.totalApartments} căn hộ\nTổng tiền: ${result.summary.totalAmount.toLocaleString('vi-VN')} VNĐ`);
+                                    // Reload trang để hiển thị phí mới
+                                    window.location.reload();
+                                } else {
+                                    alert(`❌ Lỗi: ${result.error || 'Không thể tạo phí internet'}`);
+                                }
+
+                            } catch (error) {
+                                console.error('Error creating internet fees:', error);
+                                alert('❌ Lỗi kết nối: ' + error.message);
+                            } finally {
+                                // Restore button
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = originalText;
+                            }
+                        }
+
                         // Khởi tạo ban đầu
-                        window.onload = function () {
+                        window.addEventListener('load', function () {
+                            console.log('Page loaded successfully');
+
                             // Set focus to fee amount input
-                            document.getElementById('feeAmount').focus();
-                        };
+                            const feeAmountInput = document.getElementById('feeAmount');
+                            if (feeAmountInput) {
+                                feeAmountInput.focus();
+                            }
+
+                            console.log('Initialization complete');
+                        });
                     </script>
                 </form>
             </div>
@@ -290,10 +624,31 @@
                                                         <%= user.role %>
                                                     </span>
                                             </h3>
-                                            <p class="text-blue-100">
-                                                <i class="fas fa-envelope mr-2"></i>
-                                                <%= user.email %>
-                                            </p>
+                                            <div class="flex items-center space-x-4 text-blue-100">
+                                                <div>
+                                                    <i class="fas fa-envelope mr-2"></i>
+                                                    <%= user.email %>
+                                                </div>
+                                                <% if (user.apartment) { %>
+                                                    <div class="bg-white/10 px-3 py-1 rounded-full">
+                                                        <i class="fas fa-building mr-1"></i>
+                                                        <%= user.apartment.id %>
+                                                            <span class="text-xs">(<%= user.apartment.area %>m²)</span>
+                                                            <% if (user.apartment.useStatus==='Đang ở' ) { %>
+                                                                <i class="fas fa-home ml-2 text-green-300"
+                                                                    title="Đang ở"></i>
+                                                                <% } else { %>
+                                                                    <i class="fas fa-home ml-2 text-gray-300"
+                                                                        title="Không ở"></i>
+                                                                    <% } %>
+                                                    </div>
+                                                    <% } else { %>
+                                                        <div class="bg-white/10 px-3 py-1 rounded-full text-xs">
+                                                            <i class="fas fa-home mr-1"></i>
+                                                            Chưa có căn hộ
+                                                        </div>
+                                                        <% } %>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-2">
@@ -378,6 +733,9 @@
             </div>
         </div>
     </main>
+
+    <!-- Hidden data for JavaScript -->
+    <script type="application/json" id="usersData"><%- JSON.stringify(users) %></script>
 
     <!-- Footer -->
     <footer class="bg-white/80 backdrop-blur-sm mt-12 border-t border-blue-100">

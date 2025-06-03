@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý phương tiện - Hệ thống thu phí chung cư</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .vehicle-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .vehicle-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-card {
+            transition: transform 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 via-blue-100 to-cyan-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-md z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/homepage"
+                        class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 text-transparent bg-clip-text hover:from-blue-700 hover:to-cyan-700 transition-all duration-300">
+                        🏢 Hệ thống thu phí
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/admin/user"
+                        class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                        <i class="fas fa-users mr-2"></i>Quản lý người dùng
+                    </a>
+                    <a href="/admin/apartment"
+                        class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                        <i class="fas fa-building mr-2"></i>Quản lý căn hộ
+                    </a>
+                    <a href="/admin/fee"
+                        class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                        <i class="fas fa-money-bill mr-2"></i>Quản lý thu phí
+                    </a>
+                    <a href="/logout"
+                        class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-red-600 rounded-md hover:from-red-600 hover:to-red-700 transition-all duration-300">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8 flex justify-between items-center">
+                <div>
+                    <h1
+                        class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">
+                        <i class="fas fa-car mr-3"></i>Quản lý phương tiện
+                    </h1>
+                    <p class="mt-2 text-gray-600">Danh sách tất cả phương tiện trong hệ thống</p>
+                </div>
+                <button id="openAddVehicleModal"
+                    class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 flex items-center">
+                    <i class="fas fa-plus mr-2"></i>Thêm phương tiện
+                </button>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
+                <div class="stats-card bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 border border-purple-100">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-purple-600">
+                            <%= stats.totalVehicles %>
+                        </div>
+                        <div class="text-sm text-gray-600">Tổng số xe</div>
+                    </div>
+                </div>
+                <div class="stats-card bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 border border-blue-100">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-600">
+                            <%= stats.motorcycles %>
+                        </div>
+                        <div class="text-sm text-gray-600">Xe máy</div>
+                    </div>
+                </div>
+                <div class="stats-card bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 border border-green-100">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600">
+                            <%= stats.cars %>
+                        </div>
+                        <div class="text-sm text-gray-600">Ô tô</div>
+                    </div>
+                </div>
+                <div class="stats-card bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 border border-yellow-100">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-yellow-600">
+                            <%= stats.bicycles %>
+                        </div>
+                        <div class="text-sm text-gray-600">Xe đạp</div>
+                    </div>
+                </div>
+                <div class="stats-card bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 border border-indigo-100">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-indigo-600">
+                            <%= stats.electricVehicles %>
+                        </div>
+                        <div class="text-sm text-gray-600">Xe điện</div>
+                    </div>
+                </div>
+                <div class="stats-card bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 border border-emerald-100">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-emerald-600">
+                            <%= stats.activeVehicles %>
+                        </div>
+                        <div class="text-sm text-gray-600">Hoạt động</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Box -->
+            <div class="mb-6">
+                <div class="relative">
+                    <input type="text" id="searchInput"
+                        placeholder="Tìm kiếm theo biển số, loại xe, hãng xe hoặc căn hộ..."
+                        class="w-full px-4 py-3 pl-10 pr-4 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicle List -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <% if (vehicles.length> 0) { %>
+                    <% vehicles.forEach(function(vehicle) { %>
+                        <div
+                            class="vehicle-card bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-purple-100">
+                            <div class="flex items-center mb-4">
+                                <div
+                                    class="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center shadow-md mr-4">
+                                    <i class="fas fa-car text-white text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">
+                                        <%= vehicle.Brand %>
+                                    </h3>
+                                    <div class="text-sm text-gray-500">
+                                        <%= vehicle.VehicleType %>
+                                    </div>
+                                    <div class="text-xs text-gray-400">ID: <%= vehicle.VehicleID %>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div class="flex items-center text-sm">
+                                    <span class="w-20 text-gray-500">Biển số:</span>
+                                    <span class="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full font-medium">
+                                        <i class="fas fa-id-card mr-1"></i>
+                                        <%= vehicle.LicensePlate %>
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center text-sm">
+                                    <span class="w-20 text-gray-500">Hãng xe:</span>
+                                    <span class="text-gray-700 font-medium">
+                                        <%= vehicle.Brand %>
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center text-sm">
+                                    <span class="w-20 text-gray-500">Loại xe:</span>
+                                    <span class="text-gray-700">
+                                        <%= vehicle.VehicleType %>
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center text-sm">
+                                    <span class="w-20 text-gray-500">Căn hộ:</span>
+                                    <% if (vehicle.ApartmentID) { %>
+                                        <span
+                                            class="px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full font-medium">
+                                            <i class="fas fa-building mr-1"></i>
+                                            <%= vehicle.ApartmentID %>
+                                        </span>
+                                        <% } else { %>
+                                            <span class="text-gray-500 italic">Chưa gán</span>
+                                            <% } %>
+                                </div>
+
+                                <div class="flex items-center text-sm">
+                                    <span class="w-20 text-gray-500">Trạng thái:</span>
+                                    <span
+                                        class="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        Hoạt động
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center text-sm">
+                                    <span class="w-20 text-gray-500">Chủ xe:</span>
+                                    <span class="text-gray-700">
+                                        <%= vehicle.firstName %>
+                                            <%= vehicle.lastName %>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Action buttons -->
+                            <div class="mt-4 flex justify-end space-x-2">
+                                <button
+                                    class="edit-vehicle-btn p-2 text-yellow-600 hover:text-yellow-800 transition-colors"
+                                    data-vehicle-id="<%= vehicle.VehicleID %>"
+                                    data-license-plate="<%= vehicle.LicensePlate %>"
+                                    data-vehicle-type="<%= vehicle.VehicleType %>" data-brand="<%= vehicle.Brand %>"
+                                    data-apartment-id="<%= vehicle.ApartmentID || '' %>"
+                                    data-id="<%= vehicle.id || '' %>">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="delete-vehicle-btn p-2 text-red-600 hover:text-red-800 transition-colors"
+                                    data-vehicle-id="<%= vehicle.VehicleID %>">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <% }); %>
+                            <% } else { %>
+                                <div class="col-span-full text-center py-12">
+                                    <div class="text-gray-400 text-6xl mb-4">
+                                        <i class="fas fa-car"></i>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-gray-900 mb-2">Chưa có phương tiện nào</h3>
+                                    <p class="text-gray-600">Nhấp vào nút "Thêm phương tiện" để bắt đầu</p>
+                                </div>
+                                <% } %>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white/80 backdrop-blur-sm mt-12 border-t border-purple-100">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-gray-600 text-sm">
+                © 2024 Hệ thống thu phí chung cư. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Modal thêm/sửa phương tiện -->
+    <div id="vehicleModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 id="modalTitle" class="text-lg leading-6 font-medium text-gray-900 mb-4">Thêm phương tiện mới</h3>
+                <form id="vehicleForm" class="space-y-4">
+                    <input type="hidden" id="vehicleId" name="vehicleId">
+                    <div>
+                        <label for="licensePlate" class="block text-sm font-medium text-gray-700">Biển số xe *</label>
+                        <input type="text" id="licensePlate" name="licensePlate" required
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label for="brand" class="block text-sm font-medium text-gray-700">Hãng xe</label>
+                        <input type="text" id="brand" name="brand" placeholder="Ví dụ: Honda, Yamaha, Toyota..."
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label for="vehicleType" class="block text-sm font-medium text-gray-700">Loại xe *</label>
+                        <select id="vehicleType" name="vehicleType" required
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                            <option value="">Chọn loại xe</option>
+                            <option value="Xe máy">Xe máy</option>
+                            <option value="Ô tô">Ô tô</option>
+                            <option value="Xe đạp">Xe đạp</option>
+                            <option value="Xe điện">Xe điện</option>
+                            <option value="Xe khác">Xe khác</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="userId" class="block text-sm font-medium text-gray-700">Chủ sở hữu</label>
+                        <select id="userId" name="id"
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                            <option value="">Chọn chủ sở hữu</option>
+                            <% users.forEach(function(user) { %>
+                                <option value="<%= user.id %>" data-apartment="<%= user.ApartmentID %>"
+                                    data-name="<%= user.firstName %> <%= user.lastName %>"
+                                    data-email="<%= user.email %>">
+                                    <%= user.firstName %>
+                                        <%= user.lastName %> - <%= user.email %>
+                                </option>
+                                <% }); %>
+                        </select>
+                        <!-- Hiển thị thông tin user được chọn -->
+                        <div id="selectedUserInfo" class="mt-2 hidden">
+                            <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-md">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-user text-blue-400"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm text-blue-700">
+                                            <span class="font-medium" id="selectedUserName"></span>
+                                        </p>
+                                        <p class="text-xs text-blue-600" id="selectedUserEmail"></p>
+                                        <p class="text-xs text-blue-600">
+                                            <i class="fas fa-building mr-1"></i>
+                                            Căn hộ: <span class="font-medium" id="selectedUserApartment"></span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <select id="apartmentId" name="apartmentId" readonly disabled
+                            class="mt-1 block w-full border border-gray-200 rounded-md shadow-sm py-2 px-3 bg-gray-50 text-gray-500 cursor-not-allowed">
+
+                            <% apartments.forEach(function(apartment) { %>
+                                <option value="<%= apartment.ApartmentID %>">
+                                    <%= apartment.ApartmentID %> - <%= apartment.Area %>m²
+                                </option>
+                                <% }); %>
+                        </select>
+
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" id="closeModal"
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                            Hủy
+                        </button>
+                        <button type="submit" id="submitBtn"
+                            class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-md hover:from-purple-700 hover:to-pink-700 transition-all duration-300">
+                            Thêm
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function () {
+            const searchTerm = this.value.toLowerCase();
+            const vehicleCards = document.querySelectorAll('.vehicle-card');
+
+            vehicleCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Modal handling
+        const modal = document.getElementById('vehicleModal');
+        const openModalBtn = document.getElementById('openAddVehicleModal');
+        const closeModalBtn = document.getElementById('closeModal');
+        const vehicleForm = document.getElementById('vehicleForm');
+        const modalTitle = document.getElementById('modalTitle');
+        const submitBtn = document.getElementById('submitBtn');
+
+        let isEditMode = false;
+
+        // Auto-fill apartment when user is selected (chỉ khi thêm mới)
+        document.getElementById('userId').addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const apartmentId = selectedOption.getAttribute('data-apartment');
+            const userName = selectedOption.getAttribute('data-name');
+            const userEmail = selectedOption.getAttribute('data-email');
+            const apartmentSelect = document.getElementById('apartmentId');
+            const userInfoDiv = document.getElementById('selectedUserInfo');
+
+            if (this.value && apartmentId) {
+                // Hiển thị thông tin user được chọn
+                document.getElementById('selectedUserName').textContent = userName;
+                document.getElementById('selectedUserEmail').textContent = userEmail;
+                document.getElementById('selectedUserApartment').textContent = apartmentId;
+                userInfoDiv.classList.remove('hidden');
+
+                // Auto-fill apartment (chỉ khi thêm mới)
+                if (!isEditMode) {
+                    apartmentSelect.disabled = false;
+                    apartmentSelect.removeAttribute('readonly');
+                    apartmentSelect.className = 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 bg-white text-gray-700';
+                }
+                apartmentSelect.value = apartmentId;
+            } else if (this.value && !apartmentId) {
+                // User được chọn nhưng chưa có căn hộ
+                document.getElementById('selectedUserName').textContent = userName;
+                document.getElementById('selectedUserEmail').textContent = userEmail;
+                document.getElementById('selectedUserApartment').textContent = 'Chưa có căn hộ';
+                userInfoDiv.classList.remove('hidden');
+
+                // Reset apartment nhưng vẫn enable để có thể chọn thủ công
+                if (!isEditMode) {
+                    apartmentSelect.disabled = false;
+                    apartmentSelect.removeAttribute('readonly');
+                    apartmentSelect.className = 'mt-1 block w-full border border-yellow-300 rounded-md shadow-sm py-2 px-3 bg-yellow-50 text-gray-700';
+                }
+                apartmentSelect.value = '';
+            } else {
+                // Ẩn thông tin user
+                userInfoDiv.classList.add('hidden');
+
+                // Reset apartment (chỉ khi thêm mới)
+                if (!isEditMode) {
+                    apartmentSelect.disabled = true;
+                    apartmentSelect.setAttribute('readonly', 'readonly');
+                    apartmentSelect.className = 'mt-1 block w-full border border-gray-200 rounded-md shadow-sm py-2 px-3 bg-gray-50 text-gray-500 cursor-not-allowed';
+                }
+                apartmentSelect.value = '';
+            }
+        });
+
+        openModalBtn.addEventListener('click', () => {
+            isEditMode = false;
+            modalTitle.textContent = 'Thêm phương tiện mới';
+            submitBtn.textContent = 'Thêm';
+            vehicleForm.reset();
+
+            // Reset apartment dropdown về trạng thái disabled
+            const apartmentSelect = document.getElementById('apartmentId');
+            apartmentSelect.disabled = true;
+            apartmentSelect.setAttribute('readonly', 'readonly');
+            apartmentSelect.className = 'mt-1 block w-full border border-gray-200 rounded-md shadow-sm py-2 px-3 bg-gray-50 text-gray-500 cursor-not-allowed';
+            apartmentSelect.value = '';
+
+            // Ẩn thông tin user
+            document.getElementById('selectedUserInfo').classList.add('hidden');
+
+            modal.classList.remove('hidden');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+
+        // Edit vehicle
+        document.querySelectorAll('.edit-vehicle-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                isEditMode = true;
+                modalTitle.textContent = 'Sửa thông tin phương tiện';
+                submitBtn.textContent = 'Cập nhật';
+
+                document.getElementById('vehicleId').value = this.dataset.vehicleId;
+                document.getElementById('licensePlate').value = this.dataset.licensePlate;
+                document.getElementById('vehicleType').value = this.dataset.vehicleType;
+                document.getElementById('brand').value = this.dataset.brand || '';
+                document.getElementById('userId').value = this.dataset.id || '';
+
+                // Hiển thị thông tin user nếu có trong edit mode
+                const userId = this.dataset.id || '';
+                const userInfoDiv = document.getElementById('selectedUserInfo');
+                if (userId) {
+                    const userOption = document.querySelector(`#userId option[value="${userId}"]`);
+                    if (userOption) {
+                        const userName = userOption.getAttribute('data-name');
+                        const userEmail = userOption.getAttribute('data-email');
+                        const apartmentFromUser = userOption.getAttribute('data-apartment');
+
+                        document.getElementById('selectedUserName').textContent = userName || 'Chưa có tên';
+                        document.getElementById('selectedUserEmail').textContent = userEmail || 'Chưa có email';
+                        document.getElementById('selectedUserApartment').textContent = apartmentFromUser || 'Chưa có';
+                        userInfoDiv.classList.remove('hidden');
+                    }
+                } else {
+                    userInfoDiv.classList.add('hidden');
+                }
+
+                // Trong edit mode, luôn enable apartment dropdown để có thể chỉnh sửa
+                const apartmentSelect = document.getElementById('apartmentId');
+                const apartmentId = this.dataset.apartmentId || '';
+
+                apartmentSelect.disabled = false;
+                apartmentSelect.removeAttribute('readonly');
+                apartmentSelect.className = 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 bg-white text-gray-700 focus:outline-none focus:ring-purple-500 focus:border-purple-500';
+                apartmentSelect.value = apartmentId;
+
+                modal.classList.remove('hidden');
+            });
+        });
+
+        // Form submission
+        vehicleForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Temporarily enable apartment dropdown để lấy giá trị
+            const apartmentSelect = document.getElementById('apartmentId');
+            const wasDisabled = apartmentSelect.disabled;
+            apartmentSelect.disabled = false;
+
+            const formData = new FormData(this);
+            const data = {
+                licensePlate: formData.get('licensePlate'),
+                vehicleType: formData.get('vehicleType'),
+                brand: formData.get('brand') || 'Chưa xác định',
+                apartmentId: formData.get('apartmentId') || '',
+                id: formData.get('id') || ''
+            };
+
+            // Restore disabled state
+            apartmentSelect.disabled = wasDisabled;
+
+            if (isEditMode) {
+                const vehicleId = formData.get('vehicleId');
+                fetch(`/admin/vehicle/${vehicleId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.message) {
+                            alert('Cập nhật thành công!');
+                            location.reload();
+                        } else {
+                            alert('Có lỗi xảy ra: ' + (result.error || 'Unknown error'));
+                        }
+                    })
+                    .catch(error => {
+                        alert('Có lỗi xảy ra: ' + error.message);
+                    });
+            } else {
+                fetch('/admin/vehicle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(data)
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('Thêm phương tiện thành công!');
+                            location.reload();
+                        } else {
+                            return response.text().then(text => {
+                                throw new Error(text);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        alert('Có lỗi xảy ra: ' + error.message);
+                    });
+            }
+        });
+
+        // Delete vehicle
+        document.querySelectorAll('.delete-vehicle-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                if (confirm('Bạn có chắc chắn muốn xóa phương tiện này?')) {
+                    const vehicleId = this.dataset.vehicleId;
+                    fetch(`/admin/vehicle/${vehicleId}`, {
+                        method: 'DELETE'
+                    })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.message) {
+                                alert('Xóa thành công!');
+                                location.reload();
+                            } else {
+                                alert('Có lỗi xảy ra: ' + (result.error || 'Unknown error'));
+                            }
+                        })
+                        .catch(error => {
+                            alert('Có lỗi xảy ra: ' + error.message);
+                        });
+                }
+            });
+        });
+
+        // Close modal when clicking outside
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -34,18 +34,56 @@ createDefaultAdmin();
 
 let getAdminUserPage = async (req, res) => {
     try {
-        const users = await db.User.findAll({
-            include: [{ model: db.Fee }],
-            attributes: ['id', 'firstName', 'lastName', 'email', 'role', 'phoneNumber', 'createdAt', 'updatedAt']
-        });
+        // Lấy thông tin users cùng với căn hộ họ sở hữu
+        const users = await db.sequelize.query(
+            `SELECT 
+                u.id,
+                u.firstName, 
+                u.lastName, 
+                u.email, 
+                u.role, 
+                u.phoneNumber, 
+                u.createdAt, 
+                u.updatedAt,
+                c.ApartmentID,
+                c.Area as ApartmentArea,
+                c.Floors,
+                c.HouseNum,
+                c.BuildingName,
+                CASE 
+                    WHEN RIGHT(c.HouseNum, 2) IN ('01', '10') THEN N'Căn góc'
+                    WHEN RIGHT(c.HouseNum, 2) IN ('05', '06') THEN N'Căn giữa'
+                    ELSE N'Căn thường'
+                END as ApartmentType
+             FROM Users u
+             LEFT JOIN Canho c ON u.id = c.id
+             ORDER BY u.role DESC, u.firstName, u.lastName`,
+            {
+                type: db.sequelize.QueryTypes.SELECT
+            }
+        );
 
         // Transform data before sending to view
         const transformedUsers = users.map(user => {
-            const plainUser = user.get({ plain: true });
             return {
-                ...plainUser,
-                fullName: `${plainUser.firstName} ${plainUser.lastName}`,
-                Fees: plainUser.Fees || []
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                fullName: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+                role: user.role,
+                phoneNumber: user.phoneNumber,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+                apartment: user.ApartmentID ? {
+                    id: user.ApartmentID,
+                    area: user.ApartmentArea,
+                    floors: user.Floors,
+                    houseNum: user.HouseNum,
+                    buildingName: user.BuildingName,
+                    type: user.ApartmentType
+                } : null,
+                Fees: [] // Giữ để tương thích
             };
         });
 
@@ -276,6 +314,27 @@ let deleteUser = async (req, res) => {
             }
         }
 
+        // Kiểm tra xem user có sở hữu căn hộ nào không
+        const userApartment = await db.sequelize.query(
+            `SELECT ApartmentID FROM Canho WHERE id = :userId`,
+            {
+                replacements: { userId: userId },
+                type: db.Sequelize.QueryTypes.SELECT
+            }
+        );
+
+        // Nếu user có căn hộ, set quyền sở hữu về NULL (làm cho căn hộ available lại)
+        if (userApartment.length > 0) {
+            await db.sequelize.query(
+                `UPDATE Canho SET id = NULL WHERE id = :userId`,
+                {
+                    replacements: { userId: userId },
+                    type: db.Sequelize.QueryTypes.UPDATE
+                }
+            );
+            console.log(`Đã hủy quyền sở hữu căn hộ ${userApartment[0].ApartmentID} của user ${userId}`);
+        }
+
         // Delete related fees first
         if (user.Fees && user.Fees.length > 0) {
             await db.Fee.destroy({
@@ -286,7 +345,11 @@ let deleteUser = async (req, res) => {
         // Now delete the user
         await user.destroy();
 
-        return res.status(200).json({ message: "Xóa người dùng thành công" });
+        const message = userApartment.length > 0
+            ? `Xóa người dùng thành công. Căn hộ ${userApartment[0].ApartmentID} đã được trả về trạng thái có sẵn.`
+            : "Xóa người dùng thành công";
+
+        return res.status(200).json({ message: message });
     } catch (err) {
         console.error("Lỗi khi xóa người dùng:", err);
         return res.status(500).send("Đã xảy ra lỗi khi xóa người dùng");

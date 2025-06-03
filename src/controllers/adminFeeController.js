@@ -2,28 +2,64 @@ import db from "../models";
 
 let getAdminFeePage = async (req, res) => {
     try {
-        // Fetch all users with their fees
-        const users = await db.User.findAll({
-            include: [{
-                model: db.Fee,
-                attributes: ['feeType', 'feeAmount', 'feeDescription', 'feeStatus', 'feeCreatedAt']
-            }],
-            order: [
-                [db.Fee, 'feeCreatedAt', 'DESC'],
-                ['createdAt', 'DESC']
-            ]
+        // Fetch all users with their fees and apartment information
+        const users = await db.sequelize.query(
+            `SELECT 
+                u.id, u.firstName, u.lastName, u.email, u.role, u.phoneNumber,
+                u.createdAt, u.updatedAt,
+                c.ApartmentID, c.Area, c.Use_Status,
+                f.id as feeId, f.feeType, f.feeAmount, f.feeDescription, 
+                f.feeStatus, f.feeCreatedAt
+             FROM Users u
+             LEFT JOIN Canho c ON u.id = c.id
+             LEFT JOIN Fees f ON u.id = f.userId
+             WHERE u.role = 'user' AND c.ApartmentID IS NOT NULL
+             ORDER BY u.firstName, u.lastName, f.feeCreatedAt DESC`,
+            {
+                type: db.sequelize.QueryTypes.SELECT
+            }
+        );
+
+        // Group fees by user
+        const userMap = new Map();
+
+        users.forEach(row => {
+            const userId = row.id;
+
+            if (!userMap.has(userId)) {
+                userMap.set(userId, {
+                    id: row.id,
+                    firstName: row.firstName,
+                    lastName: row.lastName,
+                    fullName: `${row.firstName} ${row.lastName}`,
+                    email: row.email,
+                    role: row.role,
+                    phoneNumber: row.phoneNumber,
+                    createdAt: new Date(row.createdAt).toLocaleDateString('vi-VN'),
+                    updatedAt: new Date(row.updatedAt).toLocaleDateString('vi-VN'),
+                    apartment: {
+                        id: row.ApartmentID,
+                        area: row.Area,
+                        useStatus: row.Use_Status
+                    },
+                    Fees: []
+                });
+            }
+
+            // Add fee if exists
+            if (row.feeId) {
+                userMap.get(userId).Fees.push({
+                    id: row.feeId,
+                    feeType: row.feeType,
+                    feeAmount: row.feeAmount,
+                    feeDescription: row.feeDescription,
+                    feeStatus: row.feeStatus,
+                    feeCreatedAt: row.feeCreatedAt
+                });
+            }
         });
 
-        // Transform user data
-        const transformedUsers = users.map(user => {
-            const plainUser = user.get({ plain: true });
-            return {
-                ...plainUser,
-                fullName: `${plainUser.firstName} ${plainUser.lastName}`,
-                createdAt: new Date(plainUser.createdAt).toLocaleDateString('vi-VN'),
-                updatedAt: new Date(plainUser.updatedAt).toLocaleDateString('vi-VN')
-            };
-        });
+        const transformedUsers = Array.from(userMap.values());
 
         return res.render("admin-fee.ejs", {
             users: transformedUsers
@@ -155,8 +191,259 @@ let updateFeeStatus = async (req, res) => {
     }
 }
 
+// Hàm tạo phí dịch vụ hàng tháng cho tất cả căn hộ đang ở
+let createMonthlyServiceFee = async (req, res) => {
+    try {
+        const { pricePerSqm, feeDescription } = req.body;
+
+        if (!pricePerSqm || parseFloat(pricePerSqm) <= 0) {
+            return res.status(400).json({ error: "Vui lòng nhập giá dịch vụ hợp lệ (VNĐ/m²)" });
+        }
+
+        const price = parseFloat(pricePerSqm);
+
+        // Lấy danh sách tất cả căn hộ đang ở có chủ sở hữu
+        const occupiedApartments = await db.sequelize.query(
+            `SELECT 
+                c.ApartmentID, c.Area, c.id as userId,
+                u.firstName, u.lastName, u.email
+             FROM Canho c
+             INNER JOIN Users u ON c.id = u.id
+             WHERE c.Use_Status = N'Đang ở' AND c.id IS NOT NULL`,
+            {
+                type: db.sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (occupiedApartments.length === 0) {
+            return res.status(400).json({ error: "Không có căn hộ nào đang ở để tạo phí dịch vụ" });
+        }
+
+        // Tạo phí dịch vụ cho từng căn hộ
+        const results = [];
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+
+        for (const apartment of occupiedApartments) {
+            const serviceAmount = Math.round(apartment.Area * price);
+            const description = feeDescription ||
+                `Phí dịch vụ tháng ${currentMonth}/${currentYear} - ${apartment.ApartmentID} (${apartment.Area}m² × ${price.toLocaleString('vi-VN')} VNĐ/m²)`;
+
+            try {
+                const insertQuery = `
+                    INSERT INTO Fees (
+                        feeType, feeAmount, feeDescription, feeStatus, 
+                        userId, feeCreatedBy, feeUpdatedBy, feeDate,
+                        feeCreatedAt, feeUpdatedAt, deadline, lateFee, isOverdue
+                    ) 
+                    VALUES (
+                        N'Phí dịch vụ', :feeAmount, :feeDescription, N'chưa thanh toán', 
+                        :userId, :feeCreatedBy, :feeUpdatedBy, GETDATE(),
+                        GETDATE(), GETDATE(), DATEADD(day, 15, GETDATE()), 0, 0
+                    )
+                `;
+
+                await db.sequelize.query(insertQuery, {
+                    replacements: {
+                        feeAmount: serviceAmount,
+                        feeDescription: description,
+                        userId: apartment.userId,
+                        feeCreatedBy: req.session.user.email,
+                        feeUpdatedBy: req.session.user.email
+                    },
+                    type: db.sequelize.QueryTypes.INSERT
+                });
+
+                results.push({
+                    apartmentId: apartment.ApartmentID,
+                    userName: `${apartment.firstName} ${apartment.lastName}`,
+                    area: apartment.Area,
+                    amount: serviceAmount
+                });
+
+            } catch (error) {
+                console.error(`Lỗi tạo phí cho căn hộ ${apartment.ApartmentID}:`, error);
+            }
+        }
+
+        return res.status(200).json({
+            message: `Đã tạo phí dịch vụ thành công cho ${results.length} căn hộ đang ở`,
+            details: results,
+            summary: {
+                totalApartments: results.length,
+                totalAmount: results.reduce((sum, item) => sum + item.amount, 0),
+                pricePerSqm: price
+            }
+        });
+
+    } catch (error) {
+        console.error("Lỗi khi tạo phí dịch vụ hàng tháng:", error);
+        return res.status(500).json({ error: "Có lỗi xảy ra khi tạo phí dịch vụ: " + error.message });
+    }
+};
+
+// Lấy thông tin căn hộ của user để tính phí dịch vụ
+let getUserApartmentInfo = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+
+        if (!userId) {
+            return res.status(400).json({ error: "Thiếu userId" });
+        }
+
+        // Lấy thông tin căn hộ của user
+        const apartmentInfo = await db.sequelize.query(
+            `SELECT 
+                c.ApartmentID, c.Area, c.Use_Status,
+                u.firstName, u.lastName, u.email
+             FROM Users u
+             LEFT JOIN Canho c ON u.id = c.id
+             WHERE u.id = :userId`,
+            {
+                replacements: { userId: userId },
+                type: db.sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (apartmentInfo.length === 0) {
+            return res.status(404).json({ error: "Không tìm thấy user" });
+        }
+
+        const user = apartmentInfo[0];
+
+        if (!user.ApartmentID) {
+            return res.status(400).json({
+                error: "User này chưa có căn hộ",
+                hasApartment: false
+            });
+        }
+
+        // Tính phí dịch vụ: diện tích × 16,500 VNĐ/m²
+        const SERVICE_PRICE_PER_SQM = 16500;
+        const serviceFee = Math.round(user.Area * SERVICE_PRICE_PER_SQM);
+
+        return res.status(200).json({
+            success: true,
+            user: {
+                id: userId,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email
+            },
+            apartment: {
+                id: user.ApartmentID,
+                area: user.Area,
+                useStatus: user.Use_Status
+            },
+            serviceFee: {
+                amount: serviceFee,
+                pricePerSqm: SERVICE_PRICE_PER_SQM,
+                calculation: `${user.Area}m² × ${SERVICE_PRICE_PER_SQM.toLocaleString('vi-VN')} VNĐ/m²`
+            }
+        });
+
+    } catch (error) {
+        console.error("Lỗi khi lấy thông tin căn hộ:", error);
+        return res.status(500).json({ error: "Có lỗi xảy ra khi lấy thông tin căn hộ: " + error.message });
+    }
+};
+
+// Tạo phí internet cho tất cả căn hộ
+let createInternetFeeForAll = async (req, res) => {
+    try {
+        console.log("Đang tạo phí internet cho tất cả căn hộ...");
+
+        const INTERNET_FEE = 150000; // 150,000 VNĐ cố định
+
+        // Lấy danh sách tất cả user có căn hộ
+        const usersWithApartments = await db.sequelize.query(
+            `SELECT 
+                u.id as userId, u.firstName, u.lastName, u.email,
+                c.ApartmentID, c.Area, c.Use_Status
+             FROM Users u
+             INNER JOIN Canho c ON u.id = c.id
+             WHERE u.role = 'user' AND c.ApartmentID IS NOT NULL`,
+            {
+                type: db.sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (usersWithApartments.length === 0) {
+            return res.status(400).json({
+                error: "Không có căn hộ nào để tạo phí internet",
+                success: false
+            });
+        }
+
+        // Tạo phí internet cho từng user
+        const results = [];
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+
+        for (const user of usersWithApartments) {
+            const description = `Phí internet tháng ${currentMonth}/${currentYear} - Căn hộ ${user.ApartmentID} - 150,000 VNĐ`;
+
+            try {
+                const insertQuery = `
+                    INSERT INTO Fees (
+                        feeType, feeAmount, feeDescription, feeStatus, 
+                        userId, feeCreatedBy, feeUpdatedBy, feeDate,
+                        feeCreatedAt, feeUpdatedAt, deadline, lateFee, isOverdue
+                    ) 
+                    VALUES (
+                        N'Phí internet', :feeAmount, :feeDescription, N'chưa thanh toán', 
+                        :userId, :feeCreatedBy, :feeUpdatedBy, GETDATE(),
+                        GETDATE(), GETDATE(), DATEADD(day, 15, GETDATE()), 0, 0
+                    )
+                `;
+
+                await db.sequelize.query(insertQuery, {
+                    replacements: {
+                        feeAmount: INTERNET_FEE,
+                        feeDescription: description,
+                        userId: user.userId,
+                        feeCreatedBy: req.session.user.email,
+                        feeUpdatedBy: req.session.user.email
+                    },
+                    type: db.sequelize.QueryTypes.INSERT
+                });
+
+                results.push({
+                    userId: user.userId,
+                    userName: `${user.firstName} ${user.lastName}`,
+                    apartmentId: user.ApartmentID,
+                    amount: INTERNET_FEE
+                });
+
+            } catch (error) {
+                console.error(`Lỗi tạo phí internet cho user ${user.userId}:`, error);
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: `Đã tạo phí internet thành công cho ${results.length} căn hộ`,
+            details: results,
+            summary: {
+                totalApartments: results.length,
+                totalAmount: results.length * INTERNET_FEE,
+                feePerApartment: INTERNET_FEE
+            }
+        });
+
+    } catch (error) {
+        console.error("Lỗi khi tạo phí internet hàng loạt:", error);
+        return res.status(500).json({
+            error: "Có lỗi xảy ra khi tạo phí internet: " + error.message,
+            success: false
+        });
+    }
+};
+
 module.exports = {
     getAdminFeePage,
     createFee,
-    updateFeeStatus
+    updateFeeStatus,
+    createMonthlyServiceFee,
+    getUserApartmentInfo,
+    createInternetFeeForAll
 };

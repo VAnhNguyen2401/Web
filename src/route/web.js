@@ -7,6 +7,9 @@ import adminUserController from "../controllers/adminUserController.js";
 import authController from "../controllers/authController.js";
 import { isAuthenticated, isAdmin, isUser } from "../middleware/authMiddleware.js";
 
+const apartmentController = require("../controllers/apartmentController.js");
+const vehicleController = require("../controllers/vehicleController.js");
+
 let router = express.Router();
 
 let initWebRoute = (app) => {
@@ -40,6 +43,23 @@ let initWebRoute = (app) => {
     router.get('/admin/fee', isAuthenticated, isAdmin, adminFeeController.getAdminFeePage);
     router.post('/admin/fee', isAuthenticated, isAdmin, adminFeeController.createFee);
     router.post('/admin/fee/:id/update-status', isAuthenticated, isAdmin, adminFeeController.updateFeeStatus);
+    router.post('/admin/fee/monthly-service', isAuthenticated, isAdmin, adminFeeController.createMonthlyServiceFee);
+    router.post('/admin/fee/internet-for-all', isAuthenticated, isAdmin, adminFeeController.createInternetFeeForAll);
+    router.get('/admin/fee/user-apartment/:userId', isAuthenticated, isAdmin, adminFeeController.getUserApartmentInfo);
+
+    // Admin apartment routes
+    router.get('/admin/apartment', isAuthenticated, isAdmin, apartmentController.getApartmentManagePage);
+    router.post('/admin/apartment/create', isAuthenticated, isAdmin, apartmentController.createApartment);
+    router.post('/admin/apartment/assign', isAuthenticated, isAdmin, apartmentController.assignApartment);
+    router.post('/admin/apartment/remove-owner', isAuthenticated, isAdmin, apartmentController.removeOwner);
+    router.put('/admin/apartment/update/:id', isAuthenticated, isAdmin, apartmentController.updateApartment);
+    router.delete('/admin/apartment/delete/:id', isAuthenticated, isAdmin, apartmentController.deleteApartment);
+
+    // Admin vehicle routes
+    router.get('/admin/vehicle', isAuthenticated, isAdmin, vehicleController.getVehicleManagePage);
+    router.post('/admin/vehicle', isAuthenticated, isAdmin, vehicleController.createVehicle);
+    router.put('/admin/vehicle/:id', isAuthenticated, isAdmin, vehicleController.updateVehicle);
+    router.delete('/admin/vehicle/:id', isAuthenticated, isAdmin, vehicleController.deleteVehicle);
 
     // Quên mật khẩu routes
     router.get('/forgot-password', authController.getForgotPasswordPage);
