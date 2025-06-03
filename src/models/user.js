@@ -49,10 +49,6 @@ module.exports = (sequelize, DataTypes) => {
       validate: {
         is: /^\+?[0-9]{10,15}$/ // Định dạng số điện thoại quốc tế
       }
-    },
-    telegramChatId: {
-      type: DataTypes.STRING,
-      allowNull: true
     }
   }, {
     sequelize,

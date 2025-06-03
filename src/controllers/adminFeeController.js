@@ -1,5 +1,4 @@
 import db from "../models";
-const telegramService = require('../services/telegramService');
 
 let getAdminFeePage = async (req, res) => {
     try {
@@ -110,17 +109,6 @@ let createFee = async (req, res) => {
             // Lấy ID của khoản phí vừa tạo
             const feeId = results[0]?.id || results;
             console.log("Khoản phí mới đã được tạo thành công với ID:", feeId);
-
-            // Gửi thông báo qua Telegram
-            try {
-                await telegramService.sendNewFeeNotification(userId, {
-                    feeType: feeName,
-                    feeAmount: feeAmount
-                });
-                console.log("Đã gửi thông báo Telegram cho khoản phí:", feeId);
-            } catch (telegramError) {
-                console.error('Lỗi khi gửi thông báo Telegram:', telegramError);
-            }
 
             return res.redirect('/admin/fee');
         } catch (dbError) {

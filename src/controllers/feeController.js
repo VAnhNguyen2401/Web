@@ -1,6 +1,5 @@
 const db = require('../models');
 const smsService = require('../services/smsService');
-const telegramService = require('../services/telegramService');
 
 let getFeePage = async (req, res) => {
     if (!req.session.user) {
@@ -76,17 +75,6 @@ let payFee = async (req, res) => {
             paymentDate: new Date(),
             paidAmount: totalAmount
         });
-
-        // Gửi thông báo qua Telegram
-        try {
-            await telegramService.sendPaymentSuccessNotification(user.id, {
-                feeType: fee.feeName,
-                feeAmount: totalAmount,
-                dueDate: fee.deadline
-            });
-        } catch (telegramError) {
-            console.error('Error sending Telegram notification:', telegramError);
-        }
 
         // Gửi thông báo SMS nếu người dùng có số điện thoại
         if (user.phoneNumber) {

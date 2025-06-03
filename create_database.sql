@@ -16,7 +16,6 @@ CREATE TABLE Users (
     resetPasswordToken NVARCHAR(255) NULL,
     resetPasswordExpires BIGINT NULL,
     phoneNumber NVARCHAR(20) NULL,
-    telegramChatId NVARCHAR(100) NULL,
     createdAt DATETIME NOT NULL DEFAULT GETDATE(),
     updatedAt DATETIME NOT NULL DEFAULT GETDATE()
 );

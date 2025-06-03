@@ -22,9 +22,6 @@ console.log = function (msg) {
     originalConsoleLog.apply(console, arguments);
 };
 
-// Tắt thông báo Telegram bot
-const telegramService = require('./services/telegramService');
-
 let app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
