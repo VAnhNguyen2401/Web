@@ -1,6 +1,5 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
-import smsService from './smsService.js';
 
 class NotificationService {
     async checkAndSendNotifications() {
@@ -20,9 +19,9 @@ class NotificationService {
                 }]
             });
 
-            // Gửi thông báo cho từng khoản phí
+            // Chỉ cập nhật trạng thái thông báo mà không gửi SMS
             for (const fee of unpaidFees) {
-                await this.sendNotification(fee);
+                await this.markNotificationSent(fee);
             }
 
             return unpaidFees.length;
@@ -32,16 +31,9 @@ class NotificationService {
         }
     }
 
-    async sendNotification(fee) {
+    async markNotificationSent(fee) {
         try {
-            const user = fee.User;
-
-            // Gửi SMS thông báo
-            if (user.phoneNumber) {
-                await smsService.sendFeeNotification(user, fee);
-            }
-
-            // Cập nhật trạng thái thông báo
+            // Chỉ cập nhật trạng thái thông báo đã gửi
             await fee.update({
                 notificationSent: true,
                 lastNotificationDate: new Date()
@@ -49,7 +41,7 @@ class NotificationService {
 
             return true;
         } catch (error) {
-            console.error('Error sending notification:', error);
+            console.error('Error marking notification sent:', error);
             throw error;
         }
     }

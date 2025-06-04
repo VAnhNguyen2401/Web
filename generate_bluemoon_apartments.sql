@@ -1,17 +1,15 @@
--- Script tạo tự động tất cả căn hộ cho tòa Blue Moon
--- 50 tầng x 10 phòng = 500 căn hộ
--- Chạy script này sau khi đã tạo bảng Canho
+
 
 USE Quanli;
 GO
 
--- Xóa dữ liệu cũ nếu có (chỉ của tòa Blue Moon)
+-- Xóa dữ liệu cũ nếu có 
 DELETE FROM Canho WHERE BuildingName = N'Blue Moon';
 GO
 
-PRINT 'Bắt đầu tạo 500 căn hộ cho tòa Blue Moon...';
+PRINT 'Tạo 500 căn';
 
--- Khai báo biến
+
 DECLARE @Floor INT = 1;
 DECLARE @Room INT = 1;
 DECLARE @ApartmentID NVARCHAR(50);
@@ -19,7 +17,7 @@ DECLARE @HouseNum NVARCHAR(50);
 DECLARE @Area DECIMAL(10,2);
 DECLARE @Count INT = 0;
 
--- Vòng lặp tạo căn hộ
+
 WHILE @Floor <= 50
 BEGIN
     SET @Room = 1;

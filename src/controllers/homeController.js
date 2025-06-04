@@ -83,19 +83,26 @@ let getHomePage = async (req, res) => {
             const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-            // Lấy tất cả người dùng và phí của họ trong tháng
+            // Lấy tất cả người dùng và phí của họ trong tháng với thông tin căn hộ
             const users = await db.User.findAll({
                 where: { role: 'user' },
                 attributes: ['id', 'firstName', 'lastName', 'email', 'phoneNumber'],
-                include: [{
-                    model: db.Fee,
-                    where: {
-                        feeDate: {
-                            [Op.between]: [firstDayOfMonth, lastDayOfMonth]
-                        }
+                include: [
+                    {
+                        model: db.Fee,
+                        where: {
+                            feeDate: {
+                                [Op.between]: [firstDayOfMonth, lastDayOfMonth]
+                            }
+                        },
+                        required: false
                     },
-                    required: false
-                }]
+                    {
+                        model: db.Apartment,
+                        attributes: ['ApartmentID', 'HouseNum', 'Floors', 'BuildingName'],
+                        required: false
+                    }
+                ]
             });
 
             // Tính toán thống kê tổng hợp

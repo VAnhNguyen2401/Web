@@ -63,6 +63,14 @@
                 </div>
                 <div class="flex items-center space-x-4">
                     <% if (user) { %>
+                        <!-- Greeting message -->
+                        <span class="text-sm font-medium text-gray-700">
+                            Chào <strong>
+                                <%= user.firstName %>
+                                    <%= user.lastName %>
+                            </strong>
+                        </span>
+
                         <% if (user.role==='admin' ) { %>
                             <a href="/logout"
                                 class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-red-600 rounded-md hover:from-red-600 hover:to-red-700 transition-all duration-300">
@@ -123,7 +131,7 @@
                             <i class="fas fa-building mr-2"></i>Quản lý căn hộ
                         </a>
                         <a href="/admin/vehicle"
-                            class="px-6 py-3 text-base font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-md hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                            class="px-6 py-3 text-base font-medium text-white bg-gradient-to-r from-blue-600 to-cyan-600 rounded-md hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-xl">
                             <i class="fas fa-car mr-2"></i>Quản lý phương tiện
                         </a>
                         <% } %>
@@ -403,13 +411,18 @@
                                                                         <%= user.lastName %>
                                                                 </div>
                                                                 <div class="text-sm text-gray-500">
-                                                                    <i class="fas fa-envelope mr-1"></i>
-                                                                    <%= user.email %>
+                                                                    <i class="fas fa-building mr-1"></i>
+                                                                    <%= user.Apartment ? user.Apartment.ApartmentID
+                                                                        : 'Chưa có căn hộ' %>
                                                                 </div>
-                                                                <div class="text-sm text-gray-500">
-                                                                    <i class="fas fa-phone mr-1"></i>
-                                                                    <%= user.phoneNumber || 'Chưa cập nhật' %>
-                                                                </div>
+                                                                <% if (user.Apartment) { %>
+                                                                    <div class="text-sm text-gray-500">
+                                                                        <i class="fas fa-map-marker-alt mr-1"></i>
+                                                                        Phòng <%= user.Apartment.HouseNum %> - Tầng <%=
+                                                                                user.Apartment.Floors %> - <%=
+                                                                                    user.Apartment.BuildingName %>
+                                                                    </div>
+                                                                    <% } %>
                                                             </div>
                                                         </div>
                                                     </td>

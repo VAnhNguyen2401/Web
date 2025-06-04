@@ -1,5 +1,4 @@
 const db = require('../models');
-const smsService = require('../services/smsService');
 
 let getFeePage = async (req, res) => {
     if (!req.session.user) {
@@ -75,16 +74,6 @@ let payFee = async (req, res) => {
             paymentDate: new Date(),
             paidAmount: totalAmount
         });
-
-        // Gửi thông báo SMS nếu người dùng có số điện thoại
-        if (user.phoneNumber) {
-            const message = `Cảm ơn bạn đã thanh toán khoản phí ${fee.feeName}. Số tiền: ${totalAmount.toLocaleString('vi-VN')} VNĐ`;
-            try {
-                await smsService.sendSMS(user.phoneNumber, message);
-            } catch (smsError) {
-                console.error('Error sending SMS:', smsError);
-            }
-        }
 
         res.redirect('/fee');
     } catch (error) {

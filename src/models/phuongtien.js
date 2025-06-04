@@ -21,17 +21,9 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: true,
             defaultValue: 'Chưa xác định'
         },
-        UserID: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'Users',
-                key: 'id'
-            }
-        },
         ApartmentID: {
             type: DataTypes.STRING(10),
-            allowNull: true,
+            allowNull: false,
             references: {
                 model: 'Canho',
                 key: 'ApartmentID'
@@ -42,6 +34,13 @@ module.exports = (sequelize, DataTypes) => {
         timestamps: false,
         freezeTableName: true
     });
+
+    PhuongTien.associate = function (models) {
+        PhuongTien.belongsTo(models.Apartment, {
+            foreignKey: 'ApartmentID',
+            targetKey: 'ApartmentID'
+        });
+    };
 
     return PhuongTien;
 };

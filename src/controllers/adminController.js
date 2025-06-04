@@ -74,14 +74,84 @@ const deleteUser = async (req, res) => {
             return res.status(400).json({ error: "Không thể xóa tài khoản của chính mình" });
         }
 
+        // Find user and check if exists
+        const user = await db.User.findByPk(userId, {
+            include: [{ model: db.Fee }]
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: "Không tìm thấy người dùng" });
+        }
+
+        // Check if user is admin
+        if (user.role === 'admin') {
+            // Count number of admin users
+            const adminCount = await db.User.count({
+                where: { role: 'admin' }
+            });
+
+            if (adminCount <= 1) {
+                return res.status(400).json({ error: "Không thể xóa admin cuối cùng của hệ thống" });
+            }
+        }
+
+        // Kiểm tra và xử lý phương tiện của user
+        const userVehicles = await db.sequelize.query(
+            `SELECT VehicleID, LicensePlate, VehicleType FROM PhuongTien WHERE id = :userId`,
+            {
+                replacements: { userId: userId },
+                type: db.Sequelize.QueryTypes.SELECT
+            }
+        );
+
+        // Nếu user có phương tiện, xóa chúng trước
+        if (userVehicles.length > 0) {
+            await db.sequelize.query(
+                `DELETE FROM PhuongTien WHERE id = :userId`,
+                {
+                    replacements: { userId: userId },
+                    type: db.Sequelize.QueryTypes.DELETE
+                }
+            );
+            console.log(`Đã xóa ${userVehicles.length} phương tiện của user ${userId}`);
+        }
+
+        // Kiểm tra xem user có sở hữu căn hộ nào không
+        const userApartment = await db.sequelize.query(
+            `SELECT ApartmentID FROM Canho WHERE id = :userId`,
+            {
+                replacements: { userId: userId },
+                type: db.Sequelize.QueryTypes.SELECT
+            }
+        );
+
+        // Nếu user có căn hộ, set quyền sở hữu về NULL
+        if (userApartment.length > 0) {
+            await db.sequelize.query(
+                `UPDATE Canho SET id = NULL WHERE id = :userId`,
+                {
+                    replacements: { userId: userId },
+                    type: db.Sequelize.QueryTypes.UPDATE
+                }
+            );
+            console.log(`Đã hủy quyền sở hữu căn hộ ${userApartment[0].ApartmentID} của user ${userId}`);
+        }
+
+        // Delete related fees first
+        if (user.Fees && user.Fees.length > 0) {
+            await db.Fee.destroy({
+                where: { userId: userId }
+            });
+        }
+
         await db.User.destroy({
             where: { id: userId }
         });
 
-        res.json({ success: true });
+        res.json({ success: true, message: "Xóa người dùng thành công" });
     } catch (error) {
         console.error('Error deleting user:', error);
-        res.status(500).json({ error: "Đã xảy ra lỗi khi xóa người dùng" });
+        res.status(500).json({ error: "Đã xảy ra lỗi khi xóa người dùng: " + error.message });
     }
 };
 

@@ -323,6 +323,38 @@ let deleteUser = async (req, res) => {
             }
         );
 
+        // Kiểm tra và xử lý phương tiện của user
+        const userVehicles = await db.sequelize.query(
+            `SELECT VehicleID, LicensePlate, VehicleType FROM PhuongTien WHERE id = :userId`,
+            {
+                replacements: { userId: userId },
+                type: db.Sequelize.QueryTypes.SELECT
+            }
+        );
+
+        // Nếu user có phương tiện, xóa hoặc gỡ quyền sở hữu
+        if (userVehicles.length > 0) {
+            // Option 1: Xóa tất cả phương tiện của user
+            await db.sequelize.query(
+                `DELETE FROM PhuongTien WHERE id = :userId`,
+                {
+                    replacements: { userId: userId },
+                    type: db.Sequelize.QueryTypes.DELETE
+                }
+            );
+
+            // Hoặc Option 2: Gỡ quyền sở hữu (set id về NULL)
+            // await db.sequelize.query(
+            //     `UPDATE PhuongTien SET id = NULL WHERE id = :userId`,
+            //     {
+            //         replacements: { userId: userId },
+            //         type: db.Sequelize.QueryTypes.UPDATE
+            //     }
+            // );
+
+            console.log(`Đã xóa ${userVehicles.length} phương tiện của user ${userId}`);
+        }
+
         // Nếu user có căn hộ, set quyền sở hữu về NULL (làm cho căn hộ available lại)
         if (userApartment.length > 0) {
             await db.sequelize.query(
@@ -345,14 +377,18 @@ let deleteUser = async (req, res) => {
         // Now delete the user
         await user.destroy();
 
-        const message = userApartment.length > 0
-            ? `Xóa người dùng thành công. Căn hộ ${userApartment[0].ApartmentID} đã được trả về trạng thái có sẵn.`
-            : "Xóa người dùng thành công";
+        let message = "Xóa người dùng thành công";
+        if (userApartment.length > 0) {
+            message += `. Căn hộ ${userApartment[0].ApartmentID} đã được trả về trạng thái có sẵn`;
+        }
+        if (userVehicles.length > 0) {
+            message += `. Đã xóa ${userVehicles.length} phương tiện liên quan`;
+        }
 
         return res.status(200).json({ message: message });
     } catch (err) {
         console.error("Lỗi khi xóa người dùng:", err);
-        return res.status(500).send("Đã xảy ra lỗi khi xóa người dùng");
+        return res.status(500).send("Đã xảy ra lỗi khi xóa người dùng: " + err.message);
     }
 };
 
