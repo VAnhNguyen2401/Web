@@ -76,7 +76,7 @@
                             <option value="Phí điện">Phí điện</option>
                             <option value="Phí nước">Phí nước</option>
                             <option value="Phí internet">Phí internet</option>
-
+                            <option value="Phí gửi xe">Phí gửi xe</option>
                             <option value="Phí khác">Phí khác</option>
                         </select>
                         <div id="serviceFeeInfo"
@@ -143,6 +143,36 @@
                             <div class="mt-1 text-sm text-green-700">
                                 <i class="fas fa-clock mr-1"></i>
                                 Tháng <span id="serviceCurrentMonth"></span>/<span id="serviceCurrentYear"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thông báo phí gửi xe cho tất cả căn hộ có phương tiện -->
+                    <div id="vehicleFeeNotice" class="hidden">
+                        <label class="block text-sm font-medium text-blue-900 mb-2">
+                            <i class="fas fa-car mr-2 text-blue-600"></i>Phí gửi xe cho tất cả căn hộ có phương tiện
+                        </label>
+                        <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <div class="flex items-center text-yellow-800">
+                                <i class="fas fa-info-circle mr-2 text-yellow-600"></i>
+                                <span class="font-medium">Tạo phí gửi xe cho TẤT CẢ căn hộ đăng ký phương
+                                    tiện</span>
+                            </div>
+                            <div class="mt-2 text-sm text-yellow-700">
+                                <i class="fas fa-motorcycle mr-1"></i>
+                                Xe máy: 100,000 VNĐ/tháng |
+                                <i class="fas fa-bolt ml-2 mr-1"></i>
+                                Xe điện: 50,000 VNĐ/tháng |
+                                <i class="fas fa-car ml-2 mr-1"></i>
+                                Ô tô: 1,000,000 VNĐ/tháng
+                            </div>
+                            <div class="mt-1 text-sm text-yellow-700">
+                                <i class="fas fa-calculator mr-1"></i>
+                                Tính theo tổng số phương tiện của từng căn hộ
+                            </div>
+                            <div class="mt-1 text-sm text-yellow-700">
+                                <i class="fas fa-clock mr-1"></i>
+                                Tháng <span id="vehicleCurrentMonth"></span>/<span id="vehicleCurrentYear"></span>
                             </div>
                         </div>
                     </div>
@@ -368,6 +398,7 @@
                             const userSelection = document.getElementById('userSelection');
                             const internetFeeNotice = document.getElementById('internetFeeNotice');
                             const serviceFeeNotice = document.getElementById('serviceFeeNotice');
+                            const vehicleFeeNotice = document.getElementById('vehicleFeeNotice');
                             const amountField = document.getElementById('feeAmount');
                             const amountPreview = document.getElementById('amountPreview');
                             const submitBtnText = document.getElementById('submitBtnText');
@@ -379,6 +410,7 @@
                                 userSelection.classList.add('hidden');
                                 internetFeeNotice.classList.add('hidden');
                                 serviceFeeNotice.classList.remove('hidden');
+                                vehicleFeeNotice.classList.add('hidden');
                                 submitBtnText.textContent = 'Tạo phí dịch vụ cho tất cả căn hộ đang ở';
 
                                 console.log('Service fee selected, setting up for all occupied apartments...');
@@ -415,11 +447,34 @@
                                 document.getElementById('currentYear').textContent = currentYear;
                                 document.getElementById('feeDescription').value = `Phí internet tháng ${currentMonth}/${currentYear} - 150,000 VNĐ cho tất cả căn hộ`;
 
+                            } else if (feeType === 'Phí gửi xe') {
+                                serviceFeeInfo.classList.add('hidden');
+                                userSelection.classList.add('hidden');
+                                internetFeeNotice.classList.add('hidden');
+                                serviceFeeNotice.classList.add('hidden');
+                                vehicleFeeNotice.classList.remove('hidden');
+                                submitBtnText.textContent = 'Tạo phí gửi xe cho tất cả căn hộ có phương tiện';
+
+                                console.log('Vehicle fee selected, setting up for all apartments with vehicles...');
+                                // Phí gửi xe theo số lượng phương tiện
+                                amountField.value = 'auto';
+                                amountField.readOnly = true;
+                                amountField.placeholder = '';
+                                amountPreview.textContent = 'Tính theo số phương tiện × Đơn giá';
+
+                                // Hiển thị tháng/năm hiện tại
+                                const currentMonth = new Date().getMonth() + 1;
+                                const currentYear = new Date().getFullYear();
+                                document.getElementById('vehicleCurrentMonth').textContent = currentMonth;
+                                document.getElementById('vehicleCurrentYear').textContent = currentYear;
+                                document.getElementById('feeDescription').value = `Phí gửi xe tháng ${currentMonth}/${currentYear} - Tính theo số phương tiện`;
+
                             } else {
                                 serviceFeeInfo.classList.add('hidden');
                                 userSelection.classList.remove('hidden');
                                 internetFeeNotice.classList.add('hidden');
                                 serviceFeeNotice.classList.add('hidden');
+                                vehicleFeeNotice.classList.add('hidden');
                                 submitBtnText.textContent = 'Tạo khoản thu';
 
                                 console.log('Other fee type selected, enabling manual input');
@@ -545,6 +600,8 @@
                                 await createInternetFeeForAll();
                             } else if (feeType === 'Phí dịch vụ') {
                                 await createServiceFeeForAll();
+                            } else if (feeType === 'Phí gửi xe') {
+                                await createVehicleFeeForAll();
                             } else {
                                 // Validate và submit form thông thường
                                 if (validateForm(event)) {
@@ -622,6 +679,43 @@
 
                             } catch (error) {
                                 console.error('Error creating service fees:', error);
+                                alert('❌ Lỗi kết nối: ' + error.message);
+                            } finally {
+                                // Restore button
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = originalText;
+                            }
+                        }
+
+                        // Tạo phí gửi xe cho tất cả căn hộ có phương tiện
+                        async function createVehicleFeeForAll() {
+                            const submitBtn = document.getElementById('submitBtn');
+                            const originalText = submitBtn.innerHTML;
+
+                            try {
+                                // Disable button và hiển thị loading
+                                submitBtn.disabled = true;
+                                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang tạo phí gửi xe...';
+
+                                const response = await fetch('/admin/fee/vehicle-for-all', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+
+                                const result = await response.json();
+
+                                if (response.ok && result.success) {
+                                    alert(`✅ Thành công!\n\n${result.message}\n\nTổng cộng: ${result.summary.totalApartments} căn hộ có phương tiện\nTổng xe máy: ${result.summary.totalMotorcycles} chiếc\nTổng xe điện: ${result.summary.totalElectricVehicles} chiếc\nTổng ô tô: ${result.summary.totalCars} chiếc\nTổng tiền: ${result.summary.totalAmount.toLocaleString('vi-VN')} VNĐ`);
+                                    // Reload trang để hiển thị phí mới
+                                    window.location.reload();
+                                } else {
+                                    alert(`❌ Lỗi: ${result.error || 'Không thể tạo phí gửi xe'}`);
+                                }
+
+                            } catch (error) {
+                                console.error('Error creating vehicle fees:', error);
                                 alert('❌ Lỗi kết nối: ' + error.message);
                             } finally {
                                 // Restore button

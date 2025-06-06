@@ -4,26 +4,21 @@ const emailService = require('../services/emailService');
 // Test database connection and table names
 let testDatabaseConnection = async () => {
     try {
-        console.log("🔍 Testing database connection...");
-
         // Test basic connection
         await db.sequelize.authenticate();
-        console.log("✅ Database connection successful");
 
         // Test Users table
         const userCount = await db.sequelize.query("SELECT COUNT(*) as count FROM Users", {
             type: db.sequelize.QueryTypes.SELECT
         });
-        console.log(`👥 Users table: ${userCount[0].count} records`);
 
         // Test Canho table
         try {
             const apartmentCount = await db.sequelize.query("SELECT COUNT(*) as count FROM Canho", {
                 type: db.sequelize.QueryTypes.SELECT
             });
-            console.log(`🏠 Canho table: ${apartmentCount[0].count} records`);
         } catch (e) {
-            console.log("⚠️  Canho table might not exist:", e.message);
+            // Canho table might not exist
         }
 
         // Test Fees table
@@ -31,22 +26,19 @@ let testDatabaseConnection = async () => {
             const feeCount = await db.sequelize.query("SELECT COUNT(*) as count FROM Fees", {
                 type: db.sequelize.QueryTypes.SELECT
             });
-            console.log(`💰 Fees table: ${feeCount[0].count} records`);
         } catch (e) {
-            console.log("⚠️  Fees table might not exist:", e.message);
+            // Fees table might not exist
         }
 
         return true;
     } catch (error) {
-        console.error("❌ Database connection test failed:", error);
+        console.error("Database connection test failed:", error);
         return false;
     }
 };
 
 let getAdminFeePage = async (req, res) => {
     try {
-        console.log("🔄 Bắt đầu tải trang quản lý khoản thu...");
-
         // Test database connection first
         const dbOk = await testDatabaseConnection();
         if (!dbOk) {
@@ -67,16 +59,9 @@ let getAdminFeePage = async (req, res) => {
              WHERE u.role != 'admin'
              ORDER BY u.firstName, u.lastName, f.feeCreatedAt DESC`,
             {
-                type: db.sequelize.QueryTypes.SELECT,
-                logging: console.log
+                type: db.sequelize.QueryTypes.SELECT
             }
         );
-
-        console.log(`📊 Query trả về ${users.length} records`);
-
-        if (users.length === 0) {
-            console.log("⚠️  Không có dữ liệu user nào (có thể do lỗi database hoặc chưa có data)");
-        }
 
         // Group fees by user
         const userMap = new Map();
@@ -122,24 +107,15 @@ let getAdminFeePage = async (req, res) => {
 
         const transformedUsers = Array.from(userMap.values());
 
-        console.log(`Đã tải thành công ${transformedUsers.length} người dùng để hiển thị trang quản lý khoản thu`);
-        console.log(`Số người dùng có căn hộ: ${transformedUsers.filter(u => u.apartment).length}`);
-
-        console.log("✅ Chuẩn bị render trang với dữ liệu đã xử lý");
-
         return res.render("admin/fee-management.ejs", {
             users: transformedUsers
         });
     } catch (e) {
-        console.error("❌ Lỗi khi tải trang quản lý khoản thu:");
-        console.error("📍 Chi tiết lỗi:", e);
-        console.error("📊 Stack trace:", e.stack);
+        console.error("Lỗi khi tải trang quản lý khoản thu:", e);
 
-        // Trả về thông tin lỗi chi tiết hơn
         return res.status(500).send(`
             <h2>Lỗi khi tải trang quản lý khoản thu</h2>
             <p><strong>Lỗi:</strong> ${e.message}</p>
-            <p><strong>Chi tiết:</strong> ${e.stack}</p>
             <p><a href="/admin/user">← Quay lại trang quản lý user</a></p>
             <p><a href="/homepage">← Về trang chủ</a></p>
         `);
@@ -148,13 +124,10 @@ let getAdminFeePage = async (req, res) => {
 
 let createFee = async (req, res) => {
     try {
-        console.log("Đang xử lý yêu cầu tạo khoản phí mới...");
         let { feeName, feeAmount, feeDescription, userId } = req.body;
-        console.log("Dữ liệu nhận được:", { feeName, feeAmount, feeDescription, userId });
 
         // Validate required fields
         if (!feeName || !feeAmount || !userId) {
-            console.log("Thiếu dữ liệu bắt buộc:", { feeName, feeAmount, userId });
             return res.status(400).send("Vui lòng điền đầy đủ thông tin");
         }
 
@@ -173,23 +146,19 @@ let createFee = async (req, res) => {
         );
 
         if (userInfo.length === 0) {
-            console.log("User không tồn tại:", userId);
             return res.status(400).send("User không tồn tại");
         }
 
         const user = userInfo[0];
-        console.log(`Tạo khoản thu cho user: ${user.firstName} ${user.lastName} (${user.email})`);
 
         // Đảm bảo feeAmount là số
         feeAmount = parseFloat(feeAmount);
         if (isNaN(feeAmount) || feeAmount <= 0) {
-            console.log("Số tiền không hợp lệ:", feeAmount);
             return res.status(400).send("Số tiền không hợp lệ");
         }
 
         // Kiểm tra giới hạn số tiền để tránh overflow
         if (feeAmount > 999999999) {
-            console.log("Số tiền quá lớn:", feeAmount);
             return res.status(400).send("Số tiền quá lớn, vui lòng nhập giá trị nhỏ hơn 1 tỷ");
         }
 
@@ -199,10 +168,7 @@ let createFee = async (req, res) => {
             const deadlineDate = new Date(currentDate);
             deadlineDate.setDate(deadlineDate.getDate() + 15);
 
-            console.log("Dữ liệu ngày tháng:", {
-                currentDate: currentDate.toISOString(),
-                deadlineDate: deadlineDate.toISOString()
-            });
+
 
             // Sử dụng SQL query với tham số được đặt tên rõ ràng
             const insertQuery = `
@@ -232,13 +198,11 @@ let createFee = async (req, res) => {
                     lateFee: '0',
                     isOverdue: 0
                 },
-                type: db.sequelize.QueryTypes.INSERT,
-                logging: console.log
+                type: db.sequelize.QueryTypes.INSERT
             });
 
             // Lấy ID của khoản phí vừa tạo
             const feeId = results[0]?.id || results;
-            console.log("Khoản phí mới đã được tạo thành công với ID:", feeId);
 
             // Gửi email thông báo cho user
             try {
@@ -260,11 +224,6 @@ let createFee = async (req, res) => {
 
                 // Gửi email thông báo
                 const emailResult = await emailService.sendFeeNotification(userEmailInfo, feeInfo);
-                if (emailResult.success) {
-                    console.log(`✅ Email thông báo khoản thu đã được gửi tới ${user.email}`);
-                } else {
-                    console.log(`❌ Không thể gửi email thông báo tới ${user.email}:`, emailResult.error);
-                }
             } catch (emailError) {
                 console.error("Lỗi khi gửi email thông báo:", emailError);
                 // Không return error vì khoản thu đã được tạo thành công
@@ -413,7 +372,7 @@ let createMonthlyServiceFee = async (req, res) => {
             const emailResults = await emailService.sendBulkFeeNotifications(notifications);
             const emailSuccessCount = emailResults.filter(r => r.success).length;
 
-            console.log(`✅ Đã gửi ${emailSuccessCount}/${emailResults.length} email thông báo phí dịch vụ`);
+
         } catch (emailError) {
             console.error("Lỗi khi gửi email thông báo phí dịch vụ:", emailError);
         }
@@ -511,7 +470,6 @@ let getUserApartmentInfo = async (req, res) => {
 // Tạo phí internet cho tất cả căn hộ
 let createInternetFeeForAll = async (req, res) => {
     try {
-        console.log("Đang tạo phí internet cho tất cả căn hộ...");
 
         const INTERNET_FEE = 150000; // 150,000 VNĐ cố định
 
@@ -602,7 +560,7 @@ let createInternetFeeForAll = async (req, res) => {
             const emailResults = await emailService.sendBulkFeeNotifications(notifications);
             const emailSuccessCount = emailResults.filter(r => r.success).length;
 
-            console.log(`✅ Đã gửi ${emailSuccessCount}/${emailResults.length} email thông báo phí internet`);
+
         } catch (emailError) {
             console.error("Lỗi khi gửi email thông báo phí internet:", emailError);
         }
@@ -627,11 +585,176 @@ let createInternetFeeForAll = async (req, res) => {
     }
 };
 
+// Tạo phí gửi xe cho tất cả căn hộ có phương tiện
+let createVehicleFeeForAll = async (req, res) => {
+    try {
+
+        // Lấy danh sách căn hộ có phương tiện cùng với thông tin user
+        const apartmentsWithVehicles = await db.sequelize.query(
+            `SELECT DISTINCT
+                c.ApartmentID, c.id as userId,
+                u.firstName, u.lastName, u.email,
+                COUNT(CASE WHEN p.VehicleType LIKE '%máy%' OR p.VehicleType LIKE '%motor%' THEN 1 END) as motorcycleCount,
+                COUNT(CASE WHEN p.VehicleType LIKE '%điện%' OR p.VehicleType LIKE '%electric%' THEN 1 END) as electricCount,
+                COUNT(CASE WHEN p.VehicleType LIKE '%tô%' OR p.VehicleType LIKE '%car%' OR p.VehicleType LIKE '%ô tô%' THEN 1 END) as carCount,
+                COUNT(p.VehicleID) as totalVehicles
+             FROM Canho c
+             INNER JOIN Users u ON c.id = u.id
+             INNER JOIN PhuongTien p ON c.ApartmentID = p.ApartmentID
+             WHERE u.role = 'user'
+             GROUP BY c.ApartmentID, c.id, u.firstName, u.lastName, u.email
+             HAVING COUNT(p.VehicleID) > 0`,
+            {
+                type: db.sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (apartmentsWithVehicles.length === 0) {
+            return res.status(400).json({
+                error: "Không có căn hộ nào có phương tiện để tạo phí gửi xe",
+                success: false
+            });
+        }
+
+
+
+        // Giá phí gửi xe
+        const MOTORCYCLE_FEE = 100000; // 100,000 VNĐ
+        const ELECTRIC_FEE = 50000; // 50,000 VNĐ
+        const CAR_FEE = 1000000; // 1,000,000 VNĐ
+
+
+        const results = [];
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+
+        let totalMotorcycles = 0;
+        let totalElectricVehicles = 0;
+        let totalCars = 0;
+
+        for (const apartment of apartmentsWithVehicles) {
+            // Tính phí cho căn hộ này
+            const motorcycleFee = (apartment.motorcycleCount || 0) * MOTORCYCLE_FEE;
+            const electricFee = (apartment.electricCount || 0) * ELECTRIC_FEE;
+            const carFee = (apartment.carCount || 0) * CAR_FEE;
+            const totalFee = motorcycleFee + electricFee + carFee;
+
+            totalMotorcycles += (apartment.motorcycleCount || 0);
+            totalElectricVehicles += (apartment.electricCount || 0);
+            totalCars += (apartment.carCount || 0);
+
+            // Tạo mô tả chi tiết
+            let feeDetails = [];
+            if (apartment.motorcycleCount > 0) {
+                feeDetails.push(`${apartment.motorcycleCount} xe máy × ${MOTORCYCLE_FEE.toLocaleString('vi-VN')} = ${motorcycleFee.toLocaleString('vi-VN')} VNĐ`);
+            }
+            if (apartment.electricCount > 0) {
+                feeDetails.push(`${apartment.electricCount} xe điện × ${ELECTRIC_FEE.toLocaleString('vi-VN')} = ${electricFee.toLocaleString('vi-VN')} VNĐ`);
+            }
+            if (apartment.carCount > 0) {
+                feeDetails.push(`${apartment.carCount} ô tô × ${CAR_FEE.toLocaleString('vi-VN')} = ${carFee.toLocaleString('vi-VN')} VNĐ`);
+            }
+
+            const description = `Phí gửi xe tháng ${currentMonth}/${currentYear} - Căn hộ ${apartment.ApartmentID}: ${feeDetails.join(' + ')} = ${totalFee.toLocaleString('vi-VN')} VNĐ`;
+
+            try {
+                const insertQuery = `
+                    INSERT INTO Fees (
+                        feeType, feeAmount, feeDescription, feeStatus, 
+                        userId, feeCreatedBy, feeUpdatedBy, feeDate,
+                        feeCreatedAt, feeUpdatedAt, deadline, lateFee, isOverdue
+                    ) 
+                    VALUES (
+                        N'Phí gửi xe', :feeAmount, :feeDescription, N'chưa thanh toán', 
+                        :userId, :feeCreatedBy, :feeUpdatedBy, GETDATE(),
+                        GETDATE(), GETDATE(), DATEADD(day, 15, GETDATE()), 0, 0
+                    )
+                `;
+
+                await db.sequelize.query(insertQuery, {
+                    replacements: {
+                        feeAmount: totalFee,
+                        feeDescription: description,
+                        userId: apartment.userId,
+                        feeCreatedBy: req.session.user.email,
+                        feeUpdatedBy: req.session.user.email
+                    },
+                    type: db.sequelize.QueryTypes.INSERT
+                });
+
+                results.push({
+                    userId: apartment.userId,
+                    userName: `${apartment.firstName} ${apartment.lastName}`,
+                    apartmentId: apartment.ApartmentID,
+                    motorcycles: apartment.motorcycleCount,
+                    cars: apartment.carCount,
+                    totalVehicles: apartment.totalVehicles,
+                    amount: totalFee,
+                    userInfo: {
+                        id: apartment.userId,
+                        firstName: apartment.firstName,
+                        lastName: apartment.lastName,
+                        email: apartment.email
+                    },
+                    feeInfo: {
+                        feeType: 'Phí gửi xe',
+                        feeAmount: totalFee,
+                        feeDescription: description,
+                        deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
+                    }
+                });
+
+
+
+            } catch (error) {
+                console.error(`Lỗi tạo phí gửi xe cho căn hộ ${apartment.ApartmentID}:`, error);
+            }
+        }
+
+        // Gửi email thông báo cho tất cả người dùng
+        try {
+            const notifications = results.map(result => ({
+                userInfo: result.userInfo,
+                feeInfo: result.feeInfo
+            }));
+
+            const emailResults = await emailService.sendBulkFeeNotifications(notifications);
+            const emailSuccessCount = emailResults.filter(r => r.success).length;
+
+
+        } catch (emailError) {
+            console.error("Lỗi khi gửi email thông báo phí gửi xe:", emailError);
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: `Đã tạo phí gửi xe thành công cho ${results.length} căn hộ có phương tiện`,
+            details: results,
+            summary: {
+                totalApartments: results.length,
+                totalMotorcycles: totalMotorcycles,
+                totalElectricVehicles: totalElectricVehicles,
+                totalCars: totalCars,
+                totalVehicles: totalMotorcycles + totalElectricVehicles + totalCars,
+                totalAmount: results.reduce((sum, item) => sum + item.amount, 0)
+            }
+        });
+
+    } catch (error) {
+        console.error("Lỗi khi tạo phí gửi xe hàng loạt:", error);
+        return res.status(500).json({
+            error: "Có lỗi xảy ra khi tạo phí gửi xe: " + error.message,
+            success: false
+        });
+    }
+};
+
 module.exports = {
     getAdminFeePage,
     createFee,
     updateFeeStatus,
     createMonthlyServiceFee,
     getUserApartmentInfo,
-    createInternetFeeForAll
+    createInternetFeeForAll,
+    createVehicleFeeForAll
 };

@@ -47,6 +47,7 @@ let initWebRoute = (app) => {
     router.post('/admin/fee/monthly-service', isAuthenticated, isAdmin, adminFeeController.createMonthlyServiceFee);
     router.post('/admin/fee/service-for-all', isAuthenticated, isAdmin, adminFeeController.createMonthlyServiceFee);
     router.post('/admin/fee/internet-for-all', isAuthenticated, isAdmin, adminFeeController.createInternetFeeForAll);
+    router.post('/admin/fee/vehicle-for-all', isAuthenticated, isAdmin, adminFeeController.createVehicleFeeForAll);
     router.get('/admin/fee/user-apartment/:userId', isAuthenticated, isAdmin, adminFeeController.getUserApartmentInfo);
 
     // Admin apartment routes
