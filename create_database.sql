@@ -42,7 +42,7 @@ CREATE TABLE Fees (
     lastNotificationDate DATETIME NULL,
     createdAt DATETIME NOT NULL DEFAULT GETDATE(),
     updatedAt DATETIME NOT NULL DEFAULT GETDATE(),
-    FOREIGN KEY (userId) REFERENCES Users(id)
+    FOREIGN KEY (apartmentId) REFERENCES Canho(ApartmentID)
 );
 GO
 

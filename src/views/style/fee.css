@@ -1,0 +1,142 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.nav-link {
+    position: relative;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background-color: #3b82f6;
+    transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}
+
+.fee-card {
+    transition: all 0.3s ease;
+}
+
+.fee-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow: auto;
+}
+
+.modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 1rem;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+}
+
+#qrCode {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    display: block;
+}
+
+.payment-status {
+    display: none;
+    text-align: center;
+    margin-top: 1rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.payment-status.success {
+    color: #10B981;
+    background-color: #ECFDF5;
+}
+
+.payment-status.error {
+    color: #EF4444;
+    background-color: #FEF2F2;
+}
+
+.payment-status.warning {
+    color: #F59E0B;
+    background-color: #FEF3C7;
+}
+
+.remaining-amount {
+    display: none;
+    text-align: center;
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: #FEF3C7;
+    border: 1px solid #F59E0B;
+}
+
+.countdown-circle {
+    width: 100px;
+    height: 100px;
+    position: relative;
+    margin: 0 auto 1rem;
+}
+
+.countdown-circle svg {
+    transform: rotate(-90deg);
+}
+
+.countdown-circle circle {
+    fill: none;
+    stroke-width: 4;
+}
+
+.countdown-circle .background {
+    stroke: #E5E7EB;
+}
+
+.countdown-circle .progress {
+    stroke: #3B82F6;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+}
+
+.countdown-circle .time {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #1F2937;
+}
+
+.close-modal {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6B7280;
+}
+
+.close-modal:hover {
+    color: #374151;
+}

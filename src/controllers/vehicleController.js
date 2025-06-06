@@ -96,7 +96,7 @@ let getVehicleManagePage = async (req, res) => {
             console.log("Error getting vehicles:", e.message);
         }
 
-        return res.render("admin-vehicle.ejs", {
+        return res.render("admin/vehicle-management.ejs", {
             vehicles: vehicles,
             users: users,
             apartments: apartments,
@@ -105,7 +105,7 @@ let getVehicleManagePage = async (req, res) => {
 
     } catch (e) {
         console.error("Error in getVehicleManagePage:", e);
-        return res.render("admin-vehicle.ejs", {
+        return res.render("admin/vehicle-management.ejs", {
             vehicles: [],
             users: [],
             apartments: [],

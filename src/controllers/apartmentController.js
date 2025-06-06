@@ -78,7 +78,7 @@ let getApartmentManagePage = async (req, res) => {
             }
         );
 
-        return res.render("admin-apartment.ejs", {
+        return res.render("admin/apartment-management.ejs", {
             apartments: apartments,
             availableUsers: availableUsers,
             stats: stats[0] || {}

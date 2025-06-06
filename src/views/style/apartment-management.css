@@ -1,0 +1,53 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.modal {
+    display: none;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.table-container {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.status-chip {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-sold {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.status-available {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-normal {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-maintenance {
+    background-color: #fed7d7;
+    color: #c53030;
+}
+
+.status-occupied {
+    background-color: #d1fae5;
+    color: #047857;
+}
+
+.status-vacant {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}

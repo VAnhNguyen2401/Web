@@ -71,7 +71,7 @@ let getHomePage = async (req, res) => {
                 };
             }
 
-            res.render('homepage', {
+            res.render('users/homepage', {
                 user: user,
                 monthlyStats: monthlyStats,
                 currentMonth: now.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' }),
@@ -148,7 +148,7 @@ let getHomePage = async (req, res) => {
                 };
             }
 
-            res.render('homepage', {
+            res.render('users/homepage', {
                 user: user,
                 monthlyStats: monthlyStats,
                 currentMonth: now.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' }),
@@ -158,7 +158,7 @@ let getHomePage = async (req, res) => {
         }
     } catch (error) {
         console.error('Error getting homepage stats:', error);
-        res.render('homepage', {
+        res.render('users/homepage', {
             user: user,
             monthlyStats: null,
             currentMonth: new Date().toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' }),

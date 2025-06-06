@@ -101,5 +101,5 @@ FROM PhuongTien pt
 INNER JOIN Users u ON pt.UserID = u.id
 ORDER BY pt.VehicleID;
 
-PRINT N'✅ Bảng PhuongTien đã được tạo thành công với dữ liệu mẫu!';
+PRINT N' Bảng PhuongTien đã được tạo thành công với dữ liệu mẫu!';
 GO 

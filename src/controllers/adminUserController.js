@@ -87,7 +87,7 @@ let getAdminUserPage = async (req, res) => {
             };
         });
 
-        res.render("admin-user.ejs", {
+        res.render("admin/user-management.ejs", {
             users: transformedUsers
         });
     } catch (err) {

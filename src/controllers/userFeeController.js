@@ -16,7 +16,7 @@ let getFeePage = async (req, res) => {
         const pendingFees = fees.filter(fee => fee.feeStatus === 'chưa thanh toán');
         const pendingAmount = pendingFees.reduce((sum, fee) => sum + parseFloat(fee.feeAmount), 0);
 
-        return res.render("user-fee.ejs", {
+        return res.render("users/fee.ejs", {
             fees: fees,
             totalAmount: totalAmount,
             pendingAmount: pendingAmount,

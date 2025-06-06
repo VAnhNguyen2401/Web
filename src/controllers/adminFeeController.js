@@ -61,7 +61,7 @@ let getAdminFeePage = async (req, res) => {
 
         const transformedUsers = Array.from(userMap.values());
 
-        return res.render("admin-fee.ejs", {
+        return res.render("admin/fee-management.ejs", {
             users: transformedUsers
         });
     } catch (e) {
