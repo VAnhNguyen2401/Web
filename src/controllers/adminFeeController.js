@@ -1,8 +1,58 @@
 import db from "../models";
 const emailService = require('../services/emailService');
 
+// Test database connection and table names
+let testDatabaseConnection = async () => {
+    try {
+        console.log("🔍 Testing database connection...");
+
+        // Test basic connection
+        await db.sequelize.authenticate();
+        console.log("✅ Database connection successful");
+
+        // Test Users table
+        const userCount = await db.sequelize.query("SELECT COUNT(*) as count FROM Users", {
+            type: db.sequelize.QueryTypes.SELECT
+        });
+        console.log(`👥 Users table: ${userCount[0].count} records`);
+
+        // Test Canho table
+        try {
+            const apartmentCount = await db.sequelize.query("SELECT COUNT(*) as count FROM Canho", {
+                type: db.sequelize.QueryTypes.SELECT
+            });
+            console.log(`🏠 Canho table: ${apartmentCount[0].count} records`);
+        } catch (e) {
+            console.log("⚠️  Canho table might not exist:", e.message);
+        }
+
+        // Test Fees table
+        try {
+            const feeCount = await db.sequelize.query("SELECT COUNT(*) as count FROM Fees", {
+                type: db.sequelize.QueryTypes.SELECT
+            });
+            console.log(`💰 Fees table: ${feeCount[0].count} records`);
+        } catch (e) {
+            console.log("⚠️  Fees table might not exist:", e.message);
+        }
+
+        return true;
+    } catch (error) {
+        console.error("❌ Database connection test failed:", error);
+        return false;
+    }
+};
+
 let getAdminFeePage = async (req, res) => {
     try {
+        console.log("🔄 Bắt đầu tải trang quản lý khoản thu...");
+
+        // Test database connection first
+        const dbOk = await testDatabaseConnection();
+        if (!dbOk) {
+            throw new Error("Database connection failed");
+        }
+
         // Fetch all users with their fees and apartment information
         const users = await db.sequelize.query(
             `SELECT 
@@ -14,12 +64,19 @@ let getAdminFeePage = async (req, res) => {
              FROM Users u
              LEFT JOIN Canho c ON u.id = c.id
              LEFT JOIN Fees f ON u.id = f.userId
-             WHERE u.role = 'user' AND c.ApartmentID IS NOT NULL
+             WHERE u.role != 'admin'
              ORDER BY u.firstName, u.lastName, f.feeCreatedAt DESC`,
             {
-                type: db.sequelize.QueryTypes.SELECT
+                type: db.sequelize.QueryTypes.SELECT,
+                logging: console.log
             }
         );
+
+        console.log(`📊 Query trả về ${users.length} records`);
+
+        if (users.length === 0) {
+            console.log("⚠️  Không có dữ liệu user nào (có thể do lỗi database hoặc chưa có data)");
+        }
 
         // Group fees by user
         const userMap = new Map();
@@ -28,6 +85,13 @@ let getAdminFeePage = async (req, res) => {
             const userId = row.id;
 
             if (!userMap.has(userId)) {
+                // Chỉ tạo apartment object nếu user có căn hộ
+                const apartmentInfo = row.ApartmentID ? {
+                    id: row.ApartmentID,
+                    area: row.Area,
+                    useStatus: row.Use_Status
+                } : null;
+
                 userMap.set(userId, {
                     id: row.id,
                     firstName: row.firstName,
@@ -38,11 +102,7 @@ let getAdminFeePage = async (req, res) => {
                     phoneNumber: row.phoneNumber,
                     createdAt: new Date(row.createdAt).toLocaleDateString('vi-VN'),
                     updatedAt: new Date(row.updatedAt).toLocaleDateString('vi-VN'),
-                    apartment: {
-                        id: row.ApartmentID,
-                        area: row.Area,
-                        useStatus: row.Use_Status
-                    },
+                    apartment: apartmentInfo,
                     Fees: []
                 });
             }
@@ -62,12 +122,27 @@ let getAdminFeePage = async (req, res) => {
 
         const transformedUsers = Array.from(userMap.values());
 
+        console.log(`Đã tải thành công ${transformedUsers.length} người dùng để hiển thị trang quản lý khoản thu`);
+        console.log(`Số người dùng có căn hộ: ${transformedUsers.filter(u => u.apartment).length}`);
+
+        console.log("✅ Chuẩn bị render trang với dữ liệu đã xử lý");
+
         return res.render("admin/fee-management.ejs", {
             users: transformedUsers
         });
     } catch (e) {
-        console.log(e);
-        return res.status(500).send("Có lỗi xảy ra khi tải dữ liệu.");
+        console.error("❌ Lỗi khi tải trang quản lý khoản thu:");
+        console.error("📍 Chi tiết lỗi:", e);
+        console.error("📊 Stack trace:", e.stack);
+
+        // Trả về thông tin lỗi chi tiết hơn
+        return res.status(500).send(`
+            <h2>Lỗi khi tải trang quản lý khoản thu</h2>
+            <p><strong>Lỗi:</strong> ${e.message}</p>
+            <p><strong>Chi tiết:</strong> ${e.stack}</p>
+            <p><a href="/admin/user">← Quay lại trang quản lý user</a></p>
+            <p><a href="/homepage">← Về trang chủ</a></p>
+        `);
     }
 }
 
@@ -82,6 +157,28 @@ let createFee = async (req, res) => {
             console.log("Thiếu dữ liệu bắt buộc:", { feeName, feeAmount, userId });
             return res.status(400).send("Vui lòng điền đầy đủ thông tin");
         }
+
+        // Tìm thông tin user và căn hộ của user đó
+        const userInfo = await db.sequelize.query(
+            `SELECT 
+                u.id, u.firstName, u.lastName, u.email,
+                c.ApartmentID, c.Area, c.Use_Status
+             FROM Users u
+             LEFT JOIN Canho c ON u.id = c.id
+             WHERE u.id = :userId`,
+            {
+                replacements: { userId: userId },
+                type: db.sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (userInfo.length === 0) {
+            console.log("User không tồn tại:", userId);
+            return res.status(400).send("User không tồn tại");
+        }
+
+        const user = userInfo[0];
+        console.log(`Tạo khoản thu cho user: ${user.firstName} ${user.lastName} (${user.email})`);
 
         // Đảm bảo feeAmount là số
         feeAmount = parseFloat(feeAmount);
@@ -102,13 +199,9 @@ let createFee = async (req, res) => {
             const deadlineDate = new Date(currentDate);
             deadlineDate.setDate(deadlineDate.getDate() + 15);
 
-            // Format ngày thành chuỗi SQL Server có thể hiểu được: YYYY-MM-DD
-            const formattedCurrentDate = currentDate.toISOString().split('T')[0];
-            const formattedDeadlineDate = deadlineDate.toISOString().split('T')[0];
-
             console.log("Dữ liệu ngày tháng:", {
-                currentDate: formattedCurrentDate,
-                deadlineDate: formattedDeadlineDate
+                currentDate: currentDate.toISOString(),
+                deadlineDate: deadlineDate.toISOString()
             });
 
             // Sử dụng SQL query với tham số được đặt tên rõ ràng
@@ -130,49 +223,47 @@ let createFee = async (req, res) => {
             const [results] = await db.sequelize.query(insertQuery, {
                 replacements: {
                     feeType: feeName,
-                    feeAmount: feeAmount.toString(), // Chuyển đổi thành chuỗi để tránh lỗi số học
+                    feeAmount: feeAmount.toString(),
                     feeDescription: feeDescription || '',
                     feeStatus: 'chưa thanh toán',
                     userId: userId,
                     feeCreatedBy: req.session.user.email,
                     feeUpdatedBy: req.session.user.email,
-                    lateFee: '0', // Chuyển đổi thành chuỗi
-                    isOverdue: 0  // SQL Server sử dụng 0/1 cho boolean
+                    lateFee: '0',
+                    isOverdue: 0
                 },
                 type: db.sequelize.QueryTypes.INSERT,
-                logging: console.log // Log câu SQL để debug
+                logging: console.log
             });
 
             // Lấy ID của khoản phí vừa tạo
             const feeId = results[0]?.id || results;
             console.log("Khoản phí mới đã được tạo thành công với ID:", feeId);
 
-            // Gửi email thông báo cho người dùng
+            // Gửi email thông báo cho user
             try {
-                // Lấy thông tin người dùng
-                const user = await db.User.findByPk(userId);
-                if (user && user.email) {
-                    const userInfo = {
-                        id: user.id,
-                        firstName: user.firstName,
-                        lastName: user.lastName,
-                        email: user.email
-                    };
+                const userEmailInfo = {
+                    id: user.id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email
+                };
 
-                    const feeInfo = {
-                        feeType: feeName,
-                        feeAmount: feeAmount,
-                        feeDescription: feeDescription,
-                        deadline: deadlineDate
-                    };
+                const feeInfo = {
+                    feeType: feeName,
+                    feeAmount: feeAmount,
+                    feeDescription: feeDescription,
+                    deadline: deadlineDate,
+                    apartmentId: user.ApartmentID,
+                    apartmentArea: user.Area
+                };
 
-                    // Gửi email thông báo
-                    const emailResult = await emailService.sendFeeNotification(userInfo, feeInfo);
-                    if (emailResult.success) {
-                        console.log(` Email thông báo khoản thu đã được gửi tới ${user.email}`);
-                    } else {
-                        console.log(` Không thể gửi email thông báo tới ${user.email}:`, emailResult.error);
-                    }
+                // Gửi email thông báo
+                const emailResult = await emailService.sendFeeNotification(userEmailInfo, feeInfo);
+                if (emailResult.success) {
+                    console.log(`✅ Email thông báo khoản thu đã được gửi tới ${user.email}`);
+                } else {
+                    console.log(`❌ Không thể gửi email thông báo tới ${user.email}:`, emailResult.error);
                 }
             } catch (emailError) {
                 console.error("Lỗi khi gửi email thông báo:", emailError);
@@ -229,11 +320,12 @@ let createMonthlyServiceFee = async (req, res) => {
     try {
         const { pricePerSqm, feeDescription } = req.body;
 
-        if (!pricePerSqm || parseFloat(pricePerSqm) <= 0) {
-            return res.status(400).json({ error: "Vui lòng nhập giá dịch vụ hợp lệ (VNĐ/m²)" });
-        }
+        // Sử dụng giá mặc định 16,500 VNĐ/m² nếu không được cung cấp
+        const price = pricePerSqm ? parseFloat(pricePerSqm) : 16500;
 
-        const price = parseFloat(pricePerSqm);
+        if (price <= 0) {
+            return res.status(400).json({ error: "Giá dịch vụ phải lớn hơn 0" });
+        }
 
         // Lấy danh sách tất cả căn hộ đang ở có chủ sở hữu
         const occupiedApartments = await db.sequelize.query(
@@ -327,6 +419,7 @@ let createMonthlyServiceFee = async (req, res) => {
         }
 
         return res.status(200).json({
+            success: true,
             message: `Đã tạo phí dịch vụ thành công cho ${results.length} căn hộ đang ở`,
             details: results.map(r => ({
                 apartmentId: r.apartmentId,
@@ -343,7 +436,10 @@ let createMonthlyServiceFee = async (req, res) => {
 
     } catch (error) {
         console.error("Lỗi khi tạo phí dịch vụ hàng tháng:", error);
-        return res.status(500).json({ error: "Có lỗi xảy ra khi tạo phí dịch vụ: " + error.message });
+        return res.status(500).json({
+            success: false,
+            error: "Có lỗi xảy ra khi tạo phí dịch vụ: " + error.message
+        });
     }
 };
 
@@ -419,14 +515,14 @@ let createInternetFeeForAll = async (req, res) => {
 
         const INTERNET_FEE = 150000; // 150,000 VNĐ cố định
 
-        // Lấy danh sách tất cả user có căn hộ
+        // Lấy danh sách tất cả user có căn hộ ĐANG Ở
         const usersWithApartments = await db.sequelize.query(
             `SELECT 
                 u.id as userId, u.firstName, u.lastName, u.email,
                 c.ApartmentID, c.Area, c.Use_Status
              FROM Users u
              INNER JOIN Canho c ON u.id = c.id
-             WHERE u.role = 'user' AND c.ApartmentID IS NOT NULL`,
+             WHERE u.role = 'user' AND c.ApartmentID IS NOT NULL AND c.Use_Status = N'Đang ở'`,
             {
                 type: db.sequelize.QueryTypes.SELECT
             }
@@ -434,7 +530,7 @@ let createInternetFeeForAll = async (req, res) => {
 
         if (usersWithApartments.length === 0) {
             return res.status(400).json({
-                error: "Không có căn hộ nào để tạo phí internet",
+                error: "Không có căn hộ nào đang ở để tạo phí internet",
                 success: false
             });
         }
@@ -513,7 +609,7 @@ let createInternetFeeForAll = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: `Đã tạo phí internet thành công cho ${results.length} căn hộ`,
+            message: `Đã tạo phí internet thành công cho ${results.length} căn hộ đang ở`,
             details: results,
             summary: {
                 totalApartments: results.length,

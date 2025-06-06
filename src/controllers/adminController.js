@@ -95,29 +95,8 @@ const deleteUser = async (req, res) => {
             }
         }
 
-        // Kiểm tra và xử lý phương tiện của user
-        const userVehicles = await db.sequelize.query(
-            `SELECT VehicleID, LicensePlate, VehicleType FROM PhuongTien WHERE id = :userId`,
-            {
-                replacements: { userId: userId },
-                type: db.Sequelize.QueryTypes.SELECT
-            }
-        );
-
-        // Nếu user có phương tiện, xóa chúng trước
-        if (userVehicles.length > 0) {
-            await db.sequelize.query(
-                `DELETE FROM PhuongTien WHERE id = :userId`,
-                {
-                    replacements: { userId: userId },
-                    type: db.Sequelize.QueryTypes.DELETE
-                }
-            );
-            console.log(`Đã xóa ${userVehicles.length} phương tiện của user ${userId}`);
-        }
-
-        // Kiểm tra xem user có sở hữu căn hộ nào không
-        const userApartment = await db.sequelize.query(
+        // Kiểm tra xem user có sở hữu căn hộ nào không (có thể nhiều căn hộ)
+        const userApartments = await db.sequelize.query(
             `SELECT ApartmentID FROM Canho WHERE id = :userId`,
             {
                 replacements: { userId: userId },
@@ -125,8 +104,34 @@ const deleteUser = async (req, res) => {
             }
         );
 
-        // Nếu user có căn hộ, set quyền sở hữu về NULL
-        if (userApartment.length > 0) {
+        // Kiểm tra và xử lý phương tiện liên quan đến tất cả căn hộ của user
+        const userVehicles = await db.sequelize.query(
+            `SELECT p.VehicleID, p.LicensePlate, p.VehicleType, p.ApartmentID 
+             FROM PhuongTien p
+             INNER JOIN Canho c ON p.ApartmentID = c.ApartmentID
+             WHERE c.id = :userId`,
+            {
+                replacements: { userId: userId },
+                type: db.Sequelize.QueryTypes.SELECT
+            }
+        );
+
+        // Nếu user có phương tiện (thông qua căn hộ), xóa tất cả
+        if (userVehicles.length > 0) {
+            await db.sequelize.query(
+                `DELETE FROM PhuongTien WHERE ApartmentID IN (
+                    SELECT ApartmentID FROM Canho WHERE id = :userId
+                )`,
+                {
+                    replacements: { userId: userId },
+                    type: db.Sequelize.QueryTypes.DELETE
+                }
+            );
+            console.log(`Đã xóa ${userVehicles.length} phương tiện từ ${userApartments.length} căn hộ của user ${userId}`);
+        }
+
+        // Nếu user có căn hộ, set quyền sở hữu về NULL cho TẤT CẢ căn hộ
+        if (userApartments.length > 0) {
             await db.sequelize.query(
                 `UPDATE Canho SET id = NULL WHERE id = :userId`,
                 {
@@ -134,7 +139,8 @@ const deleteUser = async (req, res) => {
                     type: db.Sequelize.QueryTypes.UPDATE
                 }
             );
-            console.log(`Đã hủy quyền sở hữu căn hộ ${userApartment[0].ApartmentID} của user ${userId}`);
+            const apartmentList = userApartments.map(apt => apt.ApartmentID).join(', ');
+            console.log(`Đã hủy quyền sở hữu ${userApartments.length} căn hộ (${apartmentList}) của user ${userId}`);
         }
 
         // Delete related fees first

@@ -47,12 +47,18 @@ let getApartmentManagePage = async (req, res) => {
             }
         );
 
-        // Lấy danh sách users chưa có căn hộ (trừ admin) - cho việc gán căn hộ
+        // Lấy TẤT CẢ users (trừ admin) - vì 1 user có thể sở hữu nhiều căn hộ
         const availableUsers = await db.sequelize.query(
-            `SELECT u.id, u.firstName, u.lastName, u.email 
+            `SELECT 
+                u.id, 
+                u.firstName, 
+                u.lastName, 
+                u.email,
+                COUNT(c.ApartmentID) as apartmentCount
              FROM Users u 
              LEFT JOIN Canho c ON u.id = c.id 
-             WHERE c.id IS NULL AND u.role = 'user'
+             WHERE u.role = 'user'
+             GROUP BY u.id, u.firstName, u.lastName, u.email
              ORDER BY u.firstName, u.lastName`,
             {
                 type: db.sequelize.QueryTypes.SELECT
@@ -146,18 +152,18 @@ let createApartment = async (req, res) => {
             return res.status(400).send(`Căn hộ tầng ${floorNum}, phòng ${roomNum} đã tồn tại`);
         }
 
-        // Nếu có chọn chủ sở hữu, kiểm tra user đã có căn hộ chưa
+        // Nếu có chọn chủ sở hữu, kiểm tra user có tồn tại không
         if (ownerId) {
-            const userApartment = await db.sequelize.query(
-                `SELECT ApartmentID FROM Canho WHERE id = :ownerId`,
+            const userExists = await db.sequelize.query(
+                `SELECT id FROM Users WHERE id = :ownerId AND role = 'user'`,
                 {
                     replacements: { ownerId: ownerId },
                     type: db.sequelize.QueryTypes.SELECT
                 }
             );
 
-            if (userApartment.length > 0) {
-                return res.status(400).send("User này đã sở hữu căn hộ khác. Mỗi user chỉ được sở hữu 1 căn hộ.");
+            if (userExists.length === 0) {
+                return res.status(400).send("User không tồn tại hoặc không phải là user thường.");
             }
         }
 
@@ -212,19 +218,19 @@ let updateApartment = async (req, res) => {
             ownerId
         } = req.body;
 
-        // Nếu có thay đổi chủ sở hữu, kiểm tra user mới đã có căn hộ chưa
+        // Nếu có thay đổi chủ sở hữu, kiểm tra user có tồn tại không
         if (ownerId) {
-            const userApartment = await db.sequelize.query(
-                `SELECT ApartmentID FROM Canho WHERE id = :ownerId AND ApartmentID != :apartmentID`,
+            const userExists = await db.sequelize.query(
+                `SELECT id FROM Users WHERE id = :ownerId AND role = 'user'`,
                 {
-                    replacements: { ownerId: ownerId, apartmentID: apartmentID },
+                    replacements: { ownerId: ownerId },
                     type: db.sequelize.QueryTypes.SELECT
                 }
             );
 
-            if (userApartment.length > 0) {
+            if (userExists.length === 0) {
                 return res.status(400).json({
-                    error: "User này đã sở hữu căn hộ khác. Mỗi user chỉ được sở hữu 1 căn hộ."
+                    error: "User không tồn tại hoặc không phải là user thường."
                 });
             }
         }
@@ -317,11 +323,10 @@ let assignApartment = async (req, res) => {
             return res.status(400).json({ error: "Căn hộ đã có chủ sở hữu" });
         }
 
-        // Kiểm tra user có tồn tại và chưa có căn hộ không
+        // Kiểm tra user có tồn tại không
         const userCheck = await db.sequelize.query(
-            `SELECT u.id, u.firstName, u.lastName, c.ApartmentID as existingApartment
+            `SELECT u.id, u.firstName, u.lastName, u.role
              FROM Users u
-             LEFT JOIN Canho c ON u.id = c.id
              WHERE u.id = :ownerId`,
             {
                 replacements: { ownerId: ownerId },
@@ -333,9 +338,9 @@ let assignApartment = async (req, res) => {
             return res.status(404).json({ error: "Không tìm thấy user" });
         }
 
-        if (userCheck[0].existingApartment) {
+        if (userCheck[0].role !== 'user') {
             return res.status(400).json({
-                error: `User đã sở hữu căn hộ ${userCheck[0].existingApartment}. Mỗi user chỉ được sở hữu 1 căn hộ.`
+                error: "Chỉ có thể gán căn hộ cho user thường, không phải admin."
             });
         }
 

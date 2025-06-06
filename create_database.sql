@@ -51,5 +51,4 @@ CREATE INDEX idx_user_email ON Users(email);
 CREATE INDEX idx_fee_status ON Fees(feeStatus);
 CREATE INDEX idx_fee_date ON Fees(feeDate);
 CREATE INDEX idx_fee_deadline ON Fees(deadline);
-CREATE INDEX idx_fee_userId ON Fees(userId);
 GO 

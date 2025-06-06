@@ -45,13 +45,15 @@ let getVehicleManagePage = async (req, res) => {
             console.log("Error getting apartments:", e.message);
         }
 
-        // Lấy phương tiện (bao gồm cả Brand và ApartmentID)
+        // Lấy phương tiện với thông tin căn hộ và chủ sở hữu
         try {
             vehicles = await db.sequelize.query(
-                `SELECT p.VehicleID, p.VehicleType, p.LicensePlate, p.Brand, p.id, p.ApartmentID,
-                        u.firstName, u.lastName, u.email
+                `SELECT p.VehicleID, p.VehicleType, p.LicensePlate, p.Brand, p.ApartmentID,
+                        c.Area, c.Use_Status,
+                        u.id as userId, u.firstName, u.lastName, u.email
                  FROM PhuongTien p
-                 LEFT JOIN Users u ON p.id = u.id
+                 LEFT JOIN Canho c ON p.ApartmentID = c.ApartmentID
+                 LEFT JOIN Users u ON c.id = u.id
                  ORDER BY p.VehicleID`,
                 { type: db.sequelize.QueryTypes.SELECT }
             );
@@ -62,14 +64,16 @@ let getVehicleManagePage = async (req, res) => {
                 LicensePlate: v.LicensePlate,
                 VehicleType: v.VehicleType,
                 Brand: v.Brand || 'Chưa xác định',
-                id: v.id,
                 ApartmentID: v.ApartmentID || '',
+                userId: v.userId,
+                apartmentArea: v.Area,
+                apartmentStatus: v.Use_Status,
                 Model: '',
                 Color: '',
                 RegisterDate: new Date(),
                 Status: 'Hoạt động',
                 Notes: '',
-                firstName: v.firstName || 'Chưa gán',
+                firstName: v.firstName || 'Chưa có chủ',
                 lastName: v.lastName || '',
                 email: v.email || ''
             }));
@@ -125,10 +129,10 @@ let getVehicleManagePage = async (req, res) => {
 // Thêm phương tiện mới
 let createVehicle = async (req, res) => {
     try {
-        const { licensePlate, vehicleType, brand, apartmentId, id } = req.body;
+        const { licensePlate, vehicleType, brand, apartmentId } = req.body;
 
-        if (!licensePlate || !vehicleType) {
-            return res.status(400).send("Vui lòng nhập biển số và loại xe");
+        if (!licensePlate || !vehicleType || !apartmentId) {
+            return res.status(400).send("Vui lòng nhập biển số, loại xe và chọn căn hộ");
         }
 
         // Tạo ID mới
@@ -151,23 +155,35 @@ let createVehicle = async (req, res) => {
             return res.status(400).send("Biển số đã tồn tại");
         }
 
-        // Thêm mới (bao gồm Brand, ApartmentID và id)
+        // Kiểm tra căn hộ có tồn tại không
+        const apartmentCheck = await db.sequelize.query(
+            "SELECT ApartmentID FROM Canho WHERE ApartmentID = :apartmentId",
+            {
+                replacements: { apartmentId },
+                type: db.sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (apartmentCheck.length === 0) {
+            return res.status(400).send("Căn hộ không tồn tại");
+        }
+
+        // Thêm mới (chỉ cần ApartmentID, không cần userId)
         await db.sequelize.query(
-            "INSERT INTO PhuongTien (VehicleID, VehicleType, LicensePlate, Brand, ApartmentID, id) VALUES (:id, :type, :plate, :brand, :apartmentId, :userId)",
+            "INSERT INTO PhuongTien (VehicleID, VehicleType, LicensePlate, Brand, ApartmentID) VALUES (:id, :type, :plate, :brand, :apartmentId)",
             {
                 replacements: {
                     id: newId,
                     type: vehicleType,
                     plate: licensePlate,
                     brand: brand || 'Chưa xác định',
-                    apartmentId: apartmentId || null,
-                    userId: id || null
+                    apartmentId: apartmentId
                 },
                 type: db.sequelize.QueryTypes.INSERT
             }
         );
 
-        console.log(`Created vehicle ${newId}: ${licensePlate} - ${brand} - Apartment: ${apartmentId} - User: ${id}`);
+        console.log(`✅ Created vehicle ${newId}: ${licensePlate} - ${brand} - Apartment: ${apartmentId}`);
         return res.redirect('/admin/vehicle');
 
     } catch (e) {
@@ -180,23 +196,38 @@ let createVehicle = async (req, res) => {
 let updateVehicle = async (req, res) => {
     try {
         const { id } = req.params;
-        const { licensePlate, vehicleType, brand, apartmentId, id: userId } = req.body;
+        const { licensePlate, vehicleType, brand, apartmentId } = req.body;
+
+        // Kiểm tra căn hộ có tồn tại không
+        if (apartmentId) {
+            const apartmentCheck = await db.sequelize.query(
+                "SELECT ApartmentID FROM Canho WHERE ApartmentID = :apartmentId",
+                {
+                    replacements: { apartmentId },
+                    type: db.sequelize.QueryTypes.SELECT
+                }
+            );
+
+            if (apartmentCheck.length === 0) {
+                return res.status(400).json({ error: "Căn hộ không tồn tại" });
+            }
+        }
 
         await db.sequelize.query(
-            "UPDATE PhuongTien SET VehicleType = :type, LicensePlate = :plate, Brand = :brand, ApartmentID = :apartmentId, id = :userId WHERE VehicleID = :id",
+            "UPDATE PhuongTien SET VehicleType = :type, LicensePlate = :plate, Brand = :brand, ApartmentID = :apartmentId WHERE VehicleID = :id",
             {
                 replacements: {
                     type: vehicleType,
                     plate: licensePlate,
                     brand: brand || 'Chưa xác định',
                     apartmentId: apartmentId || null,
-                    userId: userId || null,
                     id: id
                 },
                 type: db.sequelize.QueryTypes.UPDATE
             }
         );
 
+        console.log(`✅ Updated vehicle ${id}: ${licensePlate} - Apartment: ${apartmentId}`);
         return res.json({ message: "Cập nhật thành công" });
 
     } catch (e) {

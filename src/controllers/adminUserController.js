@@ -34,7 +34,7 @@ createDefaultAdmin();
 
 let getAdminUserPage = async (req, res) => {
     try {
-        // Lấy thông tin users cùng với căn hộ họ sở hữu
+        // Lấy thông tin users cùng với TẤT CẢ căn hộ họ sở hữu
         const users = await db.sequelize.query(
             `SELECT 
                 u.id,
@@ -50,6 +50,7 @@ let getAdminUserPage = async (req, res) => {
                 c.Floors,
                 c.HouseNum,
                 c.BuildingName,
+                c.Use_Status,
                 CASE 
                     WHEN RIGHT(c.HouseNum, 2) IN ('01', '10') THEN N'Căn góc'
                     WHEN RIGHT(c.HouseNum, 2) IN ('05', '06') THEN N'Căn giữa'
@@ -57,35 +58,53 @@ let getAdminUserPage = async (req, res) => {
                 END as ApartmentType
              FROM Users u
              LEFT JOIN Canho c ON u.id = c.id
-             ORDER BY u.role DESC, u.firstName, u.lastName`,
+             ORDER BY u.role DESC, u.firstName, u.lastName, c.ApartmentID`,
             {
                 type: db.sequelize.QueryTypes.SELECT
             }
         );
 
-        // Transform data before sending to view
-        const transformedUsers = users.map(user => {
-            return {
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                fullName: `${user.firstName} ${user.lastName}`,
-                email: user.email,
-                role: user.role,
-                phoneNumber: user.phoneNumber,
-                createdAt: user.createdAt,
-                updatedAt: user.updatedAt,
-                apartment: user.ApartmentID ? {
-                    id: user.ApartmentID,
-                    area: user.ApartmentArea,
-                    floors: user.Floors,
-                    houseNum: user.HouseNum,
-                    buildingName: user.BuildingName,
-                    type: user.ApartmentType
-                } : null,
-                Fees: [] // Giữ để tương thích
-            };
+        console.log(`👥 Query trả về ${users.length} records (bao gồm user + apartment combinations)`);
+
+        // Group apartments by user để hiển thị TẤT CẢ căn hộ của mỗi user
+        const userMap = new Map();
+
+        users.forEach(row => {
+            const userId = row.id;
+
+            if (!userMap.has(userId)) {
+                userMap.set(userId, {
+                    id: row.id,
+                    firstName: row.firstName,
+                    lastName: row.lastName,
+                    fullName: `${row.firstName} ${row.lastName}`,
+                    email: row.email,
+                    role: row.role,
+                    phoneNumber: row.phoneNumber,
+                    createdAt: row.createdAt,
+                    updatedAt: row.updatedAt,
+                    apartments: [] // Mảng chứa TẤT CẢ căn hộ
+                });
+            }
+
+            // Thêm căn hộ nếu có
+            if (row.ApartmentID) {
+                userMap.get(userId).apartments.push({
+                    id: row.ApartmentID,
+                    area: row.ApartmentArea,
+                    floors: row.Floors,
+                    houseNum: row.HouseNum,
+                    buildingName: row.BuildingName,
+                    useStatus: row.Use_Status,
+                    type: row.ApartmentType
+                });
+            }
         });
+
+        const transformedUsers = Array.from(userMap.values());
+
+        console.log(`🏠 Số user có căn hộ: ${transformedUsers.filter(u => u.apartments.length > 0).length}`);
+        console.log(`🏢 Tổng số căn hộ được sở hữu: ${transformedUsers.reduce((total, u) => total + u.apartments.length, 0)}`);
 
         res.render("admin/user-management.ejs", {
             users: transformedUsers
@@ -314,8 +333,8 @@ let deleteUser = async (req, res) => {
             }
         }
 
-        // Kiểm tra xem user có sở hữu căn hộ nào không
-        const userApartment = await db.sequelize.query(
+        // Kiểm tra xem user có sở hữu căn hộ nào không (có thể nhiều căn hộ)
+        const userApartments = await db.sequelize.query(
             `SELECT ApartmentID FROM Canho WHERE id = :userId`,
             {
                 replacements: { userId: userId },
@@ -323,40 +342,35 @@ let deleteUser = async (req, res) => {
             }
         );
 
-        // Kiểm tra và xử lý phương tiện của user
+        // Kiểm tra và xử lý phương tiện liên quan đến tất cả căn hộ của user
         const userVehicles = await db.sequelize.query(
-            `SELECT VehicleID, LicensePlate, VehicleType FROM PhuongTien WHERE id = :userId`,
+            `SELECT p.VehicleID, p.LicensePlate, p.VehicleType, p.ApartmentID 
+             FROM PhuongTien p
+             INNER JOIN Canho c ON p.ApartmentID = c.ApartmentID
+             WHERE c.id = :userId`,
             {
                 replacements: { userId: userId },
                 type: db.Sequelize.QueryTypes.SELECT
             }
         );
 
-        // Nếu user có phương tiện, xóa hoặc gỡ quyền sở hữu
+        // Nếu user có phương tiện (thông qua căn hộ), xóa tất cả
         if (userVehicles.length > 0) {
-            // Option 1: Xóa tất cả phương tiện của user
             await db.sequelize.query(
-                `DELETE FROM PhuongTien WHERE id = :userId`,
+                `DELETE FROM PhuongTien WHERE ApartmentID IN (
+                    SELECT ApartmentID FROM Canho WHERE id = :userId
+                )`,
                 {
                     replacements: { userId: userId },
                     type: db.Sequelize.QueryTypes.DELETE
                 }
             );
 
-            // Hoặc Option 2: Gỡ quyền sở hữu (set id về NULL)
-            // await db.sequelize.query(
-            //     `UPDATE PhuongTien SET id = NULL WHERE id = :userId`,
-            //     {
-            //         replacements: { userId: userId },
-            //         type: db.Sequelize.QueryTypes.UPDATE
-            //     }
-            // );
-
-            console.log(`Đã xóa ${userVehicles.length} phương tiện của user ${userId}`);
+            console.log(`Đã xóa ${userVehicles.length} phương tiện từ ${userApartments.length} căn hộ của user ${userId}`);
         }
 
-        // Nếu user có căn hộ, set quyền sở hữu về NULL (làm cho căn hộ available lại)
-        if (userApartment.length > 0) {
+        // Nếu user có căn hộ, set quyền sở hữu về NULL cho TẤT CẢ căn hộ
+        if (userApartments.length > 0) {
             await db.sequelize.query(
                 `UPDATE Canho SET id = NULL WHERE id = :userId`,
                 {
@@ -364,7 +378,8 @@ let deleteUser = async (req, res) => {
                     type: db.Sequelize.QueryTypes.UPDATE
                 }
             );
-            console.log(`Đã hủy quyền sở hữu căn hộ ${userApartment[0].ApartmentID} của user ${userId}`);
+            const apartmentList = userApartments.map(apt => apt.ApartmentID).join(', ');
+            console.log(`Đã hủy quyền sở hữu ${userApartments.length} căn hộ (${apartmentList}) của user ${userId}`);
         }
 
         // Delete related fees first
@@ -378,8 +393,9 @@ let deleteUser = async (req, res) => {
         await user.destroy();
 
         let message = "Xóa người dùng thành công";
-        if (userApartment.length > 0) {
-            message += `. Căn hộ ${userApartment[0].ApartmentID} đã được trả về trạng thái có sẵn`;
+        if (userApartments.length > 0) {
+            const apartmentList = userApartments.map(apt => apt.ApartmentID).join(', ');
+            message += `. ${userApartments.length} căn hộ (${apartmentList}) đã được trả về trạng thái có sẵn`;
         }
         if (userVehicles.length > 0) {
             message += `. Đã xóa ${userVehicles.length} phương tiện liên quan`;

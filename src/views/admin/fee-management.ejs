@@ -115,12 +115,34 @@
                         <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                             <div class="flex items-center text-blue-800">
                                 <i class="fas fa-info-circle mr-2 text-blue-600"></i>
-                                <span class="font-medium">Sẽ tạo phí internet 150,000 VNĐ cho TẤT CẢ căn hộ có chủ sở
-                                    hữu</span>
+                                <span class="font-medium">Phí internet 150,000 VNĐ cho TẤT CẢ căn hộ đang
+                                    ở</span>
                             </div>
                             <div class="mt-2 text-sm text-blue-700">
                                 <i class="fas fa-clock mr-1"></i>
                                 Tháng <span id="currentMonth"></span>/<span id="currentYear"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thông báo phí dịch vụ cho tất cả căn hộ đang ở -->
+                    <div id="serviceFeeNotice" class="hidden">
+                        <label class="block text-sm font-medium text-blue-900 mb-2">
+                            <i class="fas fa-concierge-bell mr-2 text-blue-600"></i>Phí dịch vụ cho tất cả căn hộ đang ở
+                        </label>
+                        <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <div class="flex items-center text-green-800">
+                                <i class="fas fa-info-circle mr-2 text-green-600"></i>
+                                <span class="font-medium">Sẽ tạo phí dịch vụ (16,500 VNĐ/m²) cho TẤT CẢ căn hộ đang
+                                    ở</span>
+                            </div>
+                            <div class="mt-2 text-sm text-green-700">
+                                <i class="fas fa-calculator mr-1"></i>
+                                Tính theo diện tích: Diện tích × 16,500 VNĐ/m²
+                            </div>
+                            <div class="mt-1 text-sm text-green-700">
+                                <i class="fas fa-clock mr-1"></i>
+                                Tháng <span id="serviceCurrentMonth"></span>/<span id="serviceCurrentYear"></span>
                             </div>
                         </div>
                     </div>
@@ -345,6 +367,7 @@
                             const serviceFeeInfo = document.getElementById('serviceFeeInfo');
                             const userSelection = document.getElementById('userSelection');
                             const internetFeeNotice = document.getElementById('internetFeeNotice');
+                            const serviceFeeNotice = document.getElementById('serviceFeeNotice');
                             const amountField = document.getElementById('feeAmount');
                             const amountPreview = document.getElementById('amountPreview');
                             const submitBtnText = document.getElementById('submitBtnText');
@@ -352,19 +375,25 @@
                             console.log('Fee type changed to:', feeType);
 
                             if (feeType === 'Phí dịch vụ') {
-                                serviceFeeInfo.classList.remove('hidden');
-                                userSelection.classList.remove('hidden');
+                                serviceFeeInfo.classList.add('hidden');
+                                userSelection.classList.add('hidden');
                                 internetFeeNotice.classList.add('hidden');
-                                submitBtnText.textContent = 'Tạo khoản thu';
+                                serviceFeeNotice.classList.remove('hidden');
+                                submitBtnText.textContent = 'Tạo phí dịch vụ cho tất cả căn hộ đang ở';
 
-                                console.log('Service fee selected, setting up field...');
-                                // Thiết lập field cho phí dịch vụ
-                                amountField.value = '';
-                                amountField.placeholder = 'Chọn user để tự động tính phí...';
+                                console.log('Service fee selected, setting up for all occupied apartments...');
+                                // Thiết lập field cho phí dịch vụ hàng loạt
+                                amountField.value = '16500';
+                                amountField.placeholder = '';
                                 amountField.readOnly = true;
-                                amountPreview.textContent = '';
-                                // Tự động tính nếu đã chọn user
-                                calculateServiceFee();
+                                amountPreview.textContent = '16,500 VNĐ/m² × Tất cả căn hộ đang ở';
+
+                                // Hiển thị tháng/năm hiện tại
+                                const currentMonth = new Date().getMonth() + 1;
+                                const currentYear = new Date().getFullYear();
+                                document.getElementById('serviceCurrentMonth').textContent = currentMonth;
+                                document.getElementById('serviceCurrentYear').textContent = currentYear;
+                                document.getElementById('feeDescription').value = `Phí dịch vụ tháng ${currentMonth}/${currentYear} - 16,500 VNĐ/m² cho tất cả căn hộ đang ở`;
 
                             } else if (feeType === 'Phí internet') {
                                 serviceFeeInfo.classList.add('hidden');
@@ -390,6 +419,7 @@
                                 serviceFeeInfo.classList.add('hidden');
                                 userSelection.classList.remove('hidden');
                                 internetFeeNotice.classList.add('hidden');
+                                serviceFeeNotice.classList.add('hidden');
                                 submitBtnText.textContent = 'Tạo khoản thu';
 
                                 console.log('Other fee type selected, enabling manual input');
@@ -513,6 +543,8 @@
 
                             if (feeType === 'Phí internet') {
                                 await createInternetFeeForAll();
+                            } else if (feeType === 'Phí dịch vụ') {
+                                await createServiceFeeForAll();
                             } else {
                                 // Validate và submit form thông thường
                                 if (validateForm(event)) {
@@ -550,6 +582,46 @@
 
                             } catch (error) {
                                 console.error('Error creating internet fees:', error);
+                                alert('❌ Lỗi kết nối: ' + error.message);
+                            } finally {
+                                // Restore button
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = originalText;
+                            }
+                        }
+
+                        // Tạo phí dịch vụ cho tất cả căn hộ đang ở
+                        async function createServiceFeeForAll() {
+                            const submitBtn = document.getElementById('submitBtn');
+                            const originalText = submitBtn.innerHTML;
+
+                            try {
+                                // Disable button và hiển thị loading
+                                submitBtn.disabled = true;
+                                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang tạo phí dịch vụ...';
+
+                                const response = await fetch('/admin/fee/service-for-all', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        pricePerSqm: 16500
+                                    })
+                                });
+
+                                const result = await response.json();
+
+                                if (response.ok && result.success) {
+                                    alert(`✅ Thành công!\n\n${result.message}\n\nTổng cộng: ${result.summary.totalApartments} căn hộ đang ở\nTổng tiền: ${result.summary.totalAmount.toLocaleString('vi-VN')} VNĐ`);
+                                    // Reload trang để hiển thị phí mới
+                                    window.location.reload();
+                                } else {
+                                    alert(`❌ Lỗi: ${result.error || 'Không thể tạo phí dịch vụ'}`);
+                                }
+
+                            } catch (error) {
+                                console.error('Error creating service fees:', error);
                                 alert('❌ Lỗi kết nối: ' + error.message);
                             } finally {
                                 // Restore button
@@ -784,6 +856,10 @@
             document.getElementById('editPhoneNumber').value = phoneNumber || '';
             document.getElementById('editRole').value = role || 'user';
             openEditUserModal();
+        }
+
+        function openEditUserModal() {
+            document.getElementById('editUserModal').classList.remove('hidden');
         }
 
         function closeEditUserModal() {
