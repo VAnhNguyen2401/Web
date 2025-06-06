@@ -1,4 +1,5 @@
 import db from "../models";
+const emailService = require('../services/emailService');
 
 let getAdminFeePage = async (req, res) => {
     try {
@@ -146,6 +147,38 @@ let createFee = async (req, res) => {
             const feeId = results[0]?.id || results;
             console.log("Khoản phí mới đã được tạo thành công với ID:", feeId);
 
+            // Gửi email thông báo cho người dùng
+            try {
+                // Lấy thông tin người dùng
+                const user = await db.User.findByPk(userId);
+                if (user && user.email) {
+                    const userInfo = {
+                        id: user.id,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        email: user.email
+                    };
+
+                    const feeInfo = {
+                        feeType: feeName,
+                        feeAmount: feeAmount,
+                        feeDescription: feeDescription,
+                        deadline: deadlineDate
+                    };
+
+                    // Gửi email thông báo
+                    const emailResult = await emailService.sendFeeNotification(userInfo, feeInfo);
+                    if (emailResult.success) {
+                        console.log(` Email thông báo khoản thu đã được gửi tới ${user.email}`);
+                    } else {
+                        console.log(` Không thể gửi email thông báo tới ${user.email}:`, emailResult.error);
+                    }
+                }
+            } catch (emailError) {
+                console.error("Lỗi khi gửi email thông báo:", emailError);
+                // Không return error vì khoản thu đã được tạo thành công
+            }
+
             return res.redirect('/admin/fee');
         } catch (dbError) {
             console.error("Lỗi khi lưu khoản phí vào database:", dbError);
@@ -258,7 +291,19 @@ let createMonthlyServiceFee = async (req, res) => {
                     apartmentId: apartment.ApartmentID,
                     userName: `${apartment.firstName} ${apartment.lastName}`,
                     area: apartment.Area,
-                    amount: serviceAmount
+                    amount: serviceAmount,
+                    userInfo: {
+                        id: apartment.userId,
+                        firstName: apartment.firstName,
+                        lastName: apartment.lastName,
+                        email: apartment.email
+                    },
+                    feeInfo: {
+                        feeType: 'Phí dịch vụ',
+                        feeAmount: serviceAmount,
+                        feeDescription: description,
+                        deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000) // 15 ngày sau
+                    }
                 });
 
             } catch (error) {
@@ -266,9 +311,29 @@ let createMonthlyServiceFee = async (req, res) => {
             }
         }
 
+        // Gửi email thông báo cho tất cả người dùng
+        try {
+            const notifications = results.map(result => ({
+                userInfo: result.userInfo,
+                feeInfo: result.feeInfo
+            }));
+
+            const emailResults = await emailService.sendBulkFeeNotifications(notifications);
+            const emailSuccessCount = emailResults.filter(r => r.success).length;
+
+            console.log(`✅ Đã gửi ${emailSuccessCount}/${emailResults.length} email thông báo phí dịch vụ`);
+        } catch (emailError) {
+            console.error("Lỗi khi gửi email thông báo phí dịch vụ:", emailError);
+        }
+
         return res.status(200).json({
             message: `Đã tạo phí dịch vụ thành công cho ${results.length} căn hộ đang ở`,
-            details: results,
+            details: results.map(r => ({
+                apartmentId: r.apartmentId,
+                userName: r.userName,
+                area: r.area,
+                amount: r.amount
+            })),
             summary: {
                 totalApartments: results.length,
                 totalAmount: results.reduce((sum, item) => sum + item.amount, 0),
@@ -411,12 +476,39 @@ let createInternetFeeForAll = async (req, res) => {
                     userId: user.userId,
                     userName: `${user.firstName} ${user.lastName}`,
                     apartmentId: user.ApartmentID,
-                    amount: INTERNET_FEE
+                    amount: INTERNET_FEE,
+                    userInfo: {
+                        id: user.userId,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        email: user.email
+                    },
+                    feeInfo: {
+                        feeType: 'Phí internet',
+                        feeAmount: INTERNET_FEE,
+                        feeDescription: description,
+                        deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000) // 15 ngày sau
+                    }
                 });
 
             } catch (error) {
                 console.error(`Lỗi tạo phí internet cho user ${user.userId}:`, error);
             }
+        }
+
+        // Gửi email thông báo cho tất cả người dùng
+        try {
+            const notifications = results.map(result => ({
+                userInfo: result.userInfo,
+                feeInfo: result.feeInfo
+            }));
+
+            const emailResults = await emailService.sendBulkFeeNotifications(notifications);
+            const emailSuccessCount = emailResults.filter(r => r.success).length;
+
+            console.log(`✅ Đã gửi ${emailSuccessCount}/${emailResults.length} email thông báo phí internet`);
+        } catch (emailError) {
+            console.error("Lỗi khi gửi email thông báo phí internet:", emailError);
         }
 
         return res.status(200).json({

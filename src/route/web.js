@@ -9,6 +9,7 @@ import { isAuthenticated, isAdmin, isUser } from "../middleware/authMiddleware.j
 
 const apartmentController = require("../controllers/apartmentController.js");
 const vehicleController = require("../controllers/vehicleController.js");
+const emailNotificationController = require("../controllers/emailNotificationController.js");
 
 let router = express.Router();
 
@@ -66,6 +67,12 @@ let initWebRoute = (app) => {
     router.post('/forgot-password', authController.handleForgotPassword);
     router.get('/reset-password/:token', authController.getResetPasswordPage);
     router.post('/reset-password/:token', authController.handleResetPassword);
+
+    // Email notification routes (Admin only)
+    router.post('/api/notification/fee/:feeId', isAuthenticated, isAdmin, emailNotificationController.sendFeeNotificationEmail);
+    router.post('/api/notification/user/:userId/pending-fees', isAuthenticated, isAdmin, emailNotificationController.sendAllPendingFeesNotification);
+    router.post('/api/notification/bulk-all-users', isAuthenticated, isAdmin, emailNotificationController.sendBulkNotificationToAllUsers);
+    router.get('/api/notification/users-with-pending-fees', isAuthenticated, isAdmin, emailNotificationController.getUsersWithPendingFees);
 
     app.use("/", router);
 }
