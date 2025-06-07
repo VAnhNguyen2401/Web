@@ -8,7 +8,7 @@ let getApartmentManagePage = async (req, res) => {
             return res.redirect('/login');
         }
 
-        // Lấy danh sách TẤT CẢ căn hộ Blue Moon (có và chưa có chủ sở hữu)
+        // Lấy danh sách TẤT CẢ căn hộ Sky (có và chưa có chủ sở hữu)
         const apartments = await db.sequelize.query(
             `SELECT 
                 c.ApartmentID, 
@@ -40,7 +40,7 @@ let getApartmentManagePage = async (req, res) => {
                 END as OwnershipStatus
              FROM Canho c
              LEFT JOIN Users u ON c.id = u.id
-             WHERE c.BuildingName = N'Blue Moon'
+             WHERE c.BuildingName = N'Sky'
              ORDER BY c.Floors, c.HouseNum`,
             {
                 type: db.sequelize.QueryTypes.SELECT
@@ -65,7 +65,7 @@ let getApartmentManagePage = async (req, res) => {
             }
         );
 
-        // Thống kê tổng quan cho Blue Moon
+        // Thống kê tổng quan cho Sky
         const stats = await db.sequelize.query(
             `SELECT 
                 COUNT(*) as totalApartments,
@@ -78,7 +78,7 @@ let getApartmentManagePage = async (req, res) => {
                 MIN(Area) as minArea,
                 MAX(Area) as maxArea
              FROM Canho c
-             WHERE c.BuildingName = N'Blue Moon'`,
+             WHERE c.BuildingName = N'Sky'`,
             {
                 type: db.sequelize.QueryTypes.SELECT
             }
@@ -131,13 +131,13 @@ let createApartment = async (req, res) => {
             return res.status(400).send("Phòng phải từ 1 đến 10");
         }
 
-        // Tạo mã căn hộ và số nhà theo format Blue Moon
-        const generatedApartmentID = `BM-T${floorNum.toString().padStart(2, '0')}-P${roomNum.toString().padStart(2, '0')}`;
+        // Tạo mã căn hộ và số nhà theo format Sky
+        const generatedApartmentID = `SK-T${floorNum.toString().padStart(2, '0')}-P${roomNum.toString().padStart(2, '0')}`;
         const houseNum = `${floorNum.toString().padStart(2, '0')}${roomNum.toString().padStart(2, '0')}`;
 
         // Kiểm tra xem căn hộ đã tồn tại chưa
         const existingApartment = await db.sequelize.query(
-            `SELECT ApartmentID FROM Canho WHERE ApartmentID = :apartmentID OR (Floors = :floors AND HouseNum = :houseNum AND BuildingName = N'Blue Moon')`,
+            `SELECT ApartmentID FROM Canho WHERE ApartmentID = :apartmentID OR (Floors = :floors AND HouseNum = :houseNum AND BuildingName = N'Sky')`,
             {
                 replacements: {
                     apartmentID: generatedApartmentID,
@@ -183,7 +183,7 @@ let createApartment = async (req, res) => {
                     saleStatus: 'Chưa bán',
                     houseNum: houseNum,
                     floors: floorNum,
-                    buildingName: 'Blue Moon',
+                    buildingName: 'Sky',
                     techStatus: 'Bình thường',
                     useStatus: useStatus || 'Không ở',
                     ownerId: ownerId || null

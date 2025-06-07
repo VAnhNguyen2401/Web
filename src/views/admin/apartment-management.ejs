@@ -54,7 +54,7 @@
                         class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-emerald-600 text-transparent bg-clip-text">
                         <i class="fas fa-building mr-3"></i>Quản lý căn hộ
                     </h1>
-                    <p class="mt-2 text-gray-600">Danh sách tất cả căn hộ trong tòa Blue Moon</p>
+                    <p class="mt-2 text-gray-600">Danh sách tất cả căn hộ trong tòa nhà</p>
                 </div>
                 <button id="openAddApartmentModal"
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
@@ -116,7 +116,7 @@
             <!-- Apartments Table -->
             <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-green-100">
                 <div class="px-6 py-4 border-b border-green-100">
-                    <h3 class="text-lg font-semibold text-gray-900">Danh sách căn hộ tòa Blue Moon</h3>
+                    <h3 class="text-lg font-semibold text-gray-900">Danh sách căn hộ</h3>
                 </div>
                 <div class="table-container">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -251,7 +251,7 @@
                         <input type="text" name="apartmentID" id="apartmentID" required readonly
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50">
                         <p class="text-xs text-gray-500 mt-1">
-                            Format: BM-T01-P01 (Blue Moon - Tầng 01 - Phòng 01)
+                            Format: SK-T01-P01 (Sky - Tầng 01 - Phòng 01)
                         </p>
                     </div>
 
@@ -401,8 +401,8 @@
             const room = document.getElementById('roomNumber').value;
 
             if (floor && room) {
-                // Tạo mã căn hộ: BM-T01-P01
-                const apartmentID = `BM-T${floor.padStart(2, '0')}-P${room.padStart(2, '0')}`;
+                // Tạo mã căn hộ: SK-T01-P01
+                const apartmentID = `SK-T${floor.padStart(2, '0')}-P${room.padStart(2, '0')}`;
                 document.getElementById('apartmentID').value = apartmentID;
 
                 // Tạo số nhà: 0101, 0102, ...
@@ -457,7 +457,7 @@
         }
 
         // Initialize form
-        function initializeBlueMoonForm() {
+        function initializeApartmentForm() {
             // Reset form when modal opens
             openAddBtn.addEventListener('click', () => {
                 document.getElementById('floors').value = '';
@@ -467,7 +467,7 @@
         }
 
         // Call initialization
-        initializeBlueMoonForm();
+        initializeApartmentForm();
 
         // Delete apartment function
         function deleteApartment(apartmentID) {
