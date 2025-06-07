@@ -1,0 +1,156 @@
+
+## Tables
+1. Users
+   - Primary table for user management
+   - Contains user details, authentication, and role information
+   - Key fields: id, firstName, lastName, email, password, role
+
+2. Canho (Apartments)
+   - Stores apartment information
+   - Links to Users table via id foreign key
+   - Key fields: ApartmentID, Area, SaleStatus, HouseNum, Floors, BuildingName
+
+3. Fees
+   - Manages all fee-related information
+   - Links to both Users and Apartments
+   - Includes service fees, late fees, and payment status
+
+4. PhuongTien (Vehicles)
+   - Vehicle management table
+   - Links to apartments via ApartmentID
+   - Tracks vehicle details and ownership
+
+## Views
+1. vw_ApartmentsWithOwners
+   - Combines apartment and owner information
+   - Shows ownership status and apartment classifications
+   - Includes apartment type categorization
+
+2. vw_UsersWithApartments
+   - Links users with their apartment details
+   - Includes apartment count per user
+   - Shows user and apartment status
+
+3. vw_UsersWithFees
+   - Combines user, apartment, and fee information
+   - Excludes admin users
+   - Shows fee status and details
+
+4. vw_VehicleManagement
+   - Comprehensive vehicle information
+   - Links vehicles with apartments and owners
+   - Shows owner contact details
+
+5. vw_ApartmentStats
+   - Provides statistical overview of apartments
+   - Counts different apartment types
+   - Calculates averages and totals
+
+## Functions
+1. fn_CalculateApartmentArea
+   - Calculates apartment area based on floor and position
+   - Adjusts for premium locations
+   - Different calculations for corner, middle, and standard units
+
+2. fn_GetApartmentType
+   - Determines apartment classification
+   - Categories: Corner, Middle, Standard
+
+3. fn_GenerateVehicleID
+   - Generates unique vehicle identifiers
+   - Format: VHxxx (auto-incrementing)
+
+4. fn_CalculateServiceFee
+   - Calculates monthly service fees
+   - Based on apartment area
+   - Rate: 16,500 VND/m²
+
+5. fn_CalculateVehicleFee
+   - Calculates parking fees
+   - Different rates for cars and motorcycles
+   - Monthly calculation
+
+## Stored Procedures
+### Apartment Management
+1. sp_GenerateApartmentID
+2. sp_CheckApartmentExists
+3. sp_CreateApartment
+4. sp_UpdateApartment
+5. sp_DeleteApartment
+6. sp_AssignApartment
+7. sp_RemoveApartmentOwner
+8. sp_GetApartmentManagementData
+
+### User Management
+9. sp_CreateUser
+10. sp_UpdateUser
+11. sp_DeleteUserComplete
+12. sp_GetUserApartmentInfo
+
+### Vehicle Management
+13. sp_CreateVehicle
+14. sp_UpdateVehicle
+15. sp_DeleteVehicle
+16. sp_GetVehicleManagementData
+
+### Fee Management
+17. sp_CreateIndividualFee
+18. sp_UpdateFeeStatus
+19. sp_CreateServiceFeeForAll
+20. sp_CreateVehicleFeeForAll
+21. sp_CreateInternetFeeForAll
+22. sp_GetFeeManagementData
+
+## Triggers
+1. tr_Apartment_OwnerChange
+   - Updates apartment use status automatically
+   - Triggers on owner changes
+   - Maintains data consistency
+
+2. tr_Fee_LateFeeCalculation
+   - Calculates late fees automatically
+   - Updates overdue status
+   - Applies 5% late fee penalty
+
+## Database Indexes
+1. idx_user_email (Users.email)
+2. idx_fee_status (Fees.feeStatus)
+3. idx_fee_date (Fees.feeDate)
+4. idx_fee_deadline (Fees.deadline)
+
+## Key Features
+- Comprehensive apartment management system
+- Integrated fee calculation and tracking
+- Automated ID generation for apartments and vehicles
+- Late fee calculation and deadline tracking
+- Statistical views for management overview
+- Vehicle management with type-specific fees
+- User role management (admin/user)
+
+**Apartment Management**
+ `fn_CalculateApartmentArea()` - Tính diện tích căn hộ theo logic nghiệp vụ
+`fn_GetApartmentType()` - Xác định loại căn hộ (góc/giữa/thường)
+`sp_GenerateApartmentID()` - Tạo mã căn hộ SK-T##-P##
+`sp_CheckApartmentExists()` - Kiểm tra căn hộ tồn tại
+`sp_CreateApartment()` - Tạo căn hộ với validation đầy đủ
+`sp_GetApartmentInfo()` - Lấy thông tin căn hộ hoàn chỉnh
+
+**User Management**
+- `sp_CreateUser()` - Tạo user với validation email, phone, password
+
+ **Vehicle Management**
+- `fn_GenerateVehicleID()` - Tạo VehicleID tự động (VH001, VH002...)
+- `sp_CreateVehicle()` - Tạo phương tiện với validation biển số
+- `sp_UpdateVehicle()` - Cập nhật phương tiện
+
+ **Fee Management**
+- `fn_CalculateServiceFee()` - Tính phí dịch vụ (16,500 VNĐ/m²)
+- `fn_CalculateVehicleFee()` - Tính phí gửi xe (xe máy: 50k, ô tô: 200k)
+- `sp_CreateServiceFeeForAll()` - Tạo phí dịch vụ cho tất cả căn hộ
+- `sp_CreateVehicleFeeForAll()` - Tạo phí gửi xe cho căn hộ có xe
+- `sp_CreateInternetFeeForAll()` - Tạo phí internet (150k/căn hộ)
+
+
+
+
+
