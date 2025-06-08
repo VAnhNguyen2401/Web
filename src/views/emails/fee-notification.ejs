@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông báo khoản thu mới</title>
+    <style>
+        /* Email Fee Notification Styles */
+
+        /* Reset */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+        }
+
+        /* Container */
+        .email-container {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #f8fafc;
+        }
+
+        /* Header */
+        .email-header {
+            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+            padding: 30px;
+            text-align: center;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .header-icon {
+            background: rgba(255, 255, 255, 0.2);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .header-icon span {
+            font-size: 36px;
+            color: white;
+        }
+
+        .header-title {
+            color: white;
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 10px 0 0 0;
+            font-size: 16px;
+        }
+
+        /* Content */
+        .email-content {
+            background: white;
+            padding: 40px;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Greeting */
+        .greeting-section {
+            margin-bottom: 30px;
+        }
+
+        .greeting-title {
+            color: #1e293b;
+            margin: 0 0 10px 0;
+            font-size: 24px;
+        }
+
+        .greeting-text {
+            color: #64748b;
+            margin: 0;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        /* Fee Details Card */
+        .fee-details-card {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 5px solid #2563eb;
+        }
+
+        .fee-details-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .fee-details-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+
+        .fee-details-title {
+            color: #1e293b;
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .fee-details-content {
+            space-y: 15px;
+        }
+
+        .fee-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .fee-detail-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .fee-detail-value {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .fee-amount {
+            color: #dc2626;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .fee-deadline {
+            color: #ea580c;
+            font-weight: 600;
+        }
+
+        .fee-description-section {
+            padding: 12px 0;
+        }
+
+        .fee-description-text {
+            color: #1e293b;
+            margin: 8px 0 0 0;
+            line-height: 1.5;
+        }
+
+        /* Action Button */
+        .action-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .action-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        /* Important Notice */
+        .notice-section {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+
+        .notice-content {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .notice-icon {
+            font-size: 20px;
+            margin-right: 10px;
+            margin-top: 2px;
+        }
+
+        .notice-title {
+            color: #92400e;
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .notice-list {
+            color: #92400e;
+            margin: 0;
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .email-footer {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 25px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .footer-text {
+            color: #64748b;
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+
+        .footer-text:last-child {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="email-header">
+            <div class="header-icon">
+                <span>🏢</span>
+            </div>
+            <h1 class="header-title">
+                Thông báo khoản thu mới
+            </h1>
+            <p class="header-subtitle">
+                Hệ thống quản lý chung cư
+            </p>
+        </div>
+
+        <!-- Content -->
+        <div class="email-content">
+            <!-- Greeting -->
+            <div class="greeting-section">
+                <h2 class="greeting-title">
+                    Xin chào <%= firstName %>
+                        <%= lastName %>!
+                </h2>
+                <p class="greeting-text">
+                    Bạn có một khoản thu mới cần thanh toán. Vui lòng xem thông tin chi tiết bên dưới:
+                </p>
+            </div>
+
+            <!-- Fee Details Card -->
+            <div class="fee-details-card">
+                <div class="fee-details-header">
+                    <span class="fee-details-icon">💰</span>
+                    <h3 class="fee-details-title">
+                        Thông tin khoản thu
+                    </h3>
+                </div>
+
+                <div class="fee-details-content">
+                    <div class="fee-detail-row">
+                        <span class="fee-detail-label">Loại phí:</span>
+                        <span class="fee-detail-value">
+                            <%= feeType %>
+                        </span>
+                    </div>
+                    <div class="fee-detail-row">
+                        <span class="fee-detail-label">Số tiền:</span>
+                        <span class="fee-detail-value fee-amount">
+                            <%= formattedAmount %> VNĐ
+                        </span>
+                    </div>
+                    <div class="fee-detail-row">
+                        <span class="fee-detail-label">Hạn thanh toán:</span>
+                        <span class="fee-detail-value fee-deadline">
+                            <%= formattedDeadline %>
+                        </span>
+                    </div>
+                    <% if (feeDescription) { %>
+                        <div class="fee-description-section">
+                            <span class="fee-detail-label">Mô tả:</span>
+                            <p class="fee-description-text">
+                                <%= feeDescription %>
+                            </p>
+                        </div>
+                        <% } %>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="action-section">
+                <a href="<%= appUrl %>/fee" class="action-button">
+                    🔗 Xem chi tiết và thanh toán
+                </a>
+            </div>
+
+            <!-- Important Notice -->
+            <div class="notice-section">
+                <div class="notice-content">
+                    <span class="notice-icon">⚠️</span>
+                    <div>
+                        <h4 class="notice-title">
+                            Lưu ý quan trọng
+                        </h4>
+                        <ul class="notice-list">
+                            <li>Vui lòng thanh toán đúng hạn để tránh phí trễ hạn</li>
+                            <li>Sau hạn thanh toán, sẽ áp dụng phí trễ hạn 5% trên tổng số tiền</li>
+                            <li>Liên hệ ban quản lý nếu có thắc mắc</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="email-footer">
+                <p class="footer-text">
+                    Email này được gửi tự động từ hệ thống quản lý chung cư
+                </p>
+                <p class="footer-text">
+                    Nếu bạn có thắc mắc, vui lòng liên hệ ban quản lý hoặc trả lời email này
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

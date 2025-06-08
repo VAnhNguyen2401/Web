@@ -4,11 +4,6 @@ const {
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Fee extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
       Fee.belongsTo(models.User, { foreignKey: 'userId' });
     }
@@ -79,7 +74,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: function () {
         const date = new Date();
-        date.setDate(date.getDate() + 15); // Mặc định 15 ngày kể từ ngày tạo
+        date.setDate(date.getDate() + 15);
         return date;
       }
     },

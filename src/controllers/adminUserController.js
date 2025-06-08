@@ -21,11 +21,9 @@ const createDefaultAdmin = async () => {
                     type: db.Sequelize.QueryTypes.INSERT
                 }
             );
-
-            console.log('Đã tạo tài khoản admin mặc định với email: admin@example.com và mật khẩu: admin123456');
         }
     } catch (error) {
-        console.error('Lỗi khi tạo tài khoản admin mặc định:', error);
+        // Xử lý lỗi một cách im lặng
     }
 };
 
@@ -64,8 +62,6 @@ let getAdminUserPage = async (req, res) => {
             }
         );
 
-        console.log(`👥 Query trả về ${users.length} records (bao gồm user + apartment combinations)`);
-
         // Group apartments by user để hiển thị TẤT CẢ căn hộ của mỗi user
         const userMap = new Map();
 
@@ -103,14 +99,10 @@ let getAdminUserPage = async (req, res) => {
 
         const transformedUsers = Array.from(userMap.values());
 
-        console.log(`🏠 Số user có căn hộ: ${transformedUsers.filter(u => u.apartments.length > 0).length}`);
-        console.log(`🏢 Tổng số căn hộ được sở hữu: ${transformedUsers.reduce((total, u) => total + u.apartments.length, 0)}`);
-
         res.render("admin/user-management.ejs", {
             users: transformedUsers
         });
     } catch (err) {
-        console.error("Lỗi khi load trang admin user:", err);
         res.status(500).send("Đã xảy ra lỗi khi tải dữ liệu người dùng.");
     }
 };
@@ -141,70 +133,48 @@ let createUser = async (req, res) => {
             return res.status(400).send("Email đã được sử dụng");
         }
 
-        // Hash password with better error handling
-        let hashedPassword;
-        try {
-            // Hash password với bcrypt
-            const salt = await bcrypt.genSalt(10);
-            hashedPassword = await bcrypt.hash(password, salt);
-            console.log("Mật khẩu đã được mã hóa thành công");
-        } catch (hashError) {
-            console.error("Lỗi khi mã hóa mật khẩu:", hashError);
-            return res.status(500).send("Đã xảy ra lỗi khi mã hóa mật khẩu");
-        }
+        // Hash password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
         // Create new user with the hashed password
-        try {
-            // Sử dụng SQL query trực tiếp để tránh lỗi định dạng ngày tháng
-            const insertQuery = `
-                INSERT INTO Users (
-                    firstName, lastName, email, password, role, phoneNumber
-                ) 
-                OUTPUT INSERTED.id
-                VALUES (
-                    :firstName, :lastName, :email, :password, :role, :phoneNumber
-                )
-            `;
+        const insertQuery = `
+            INSERT INTO Users (
+                firstName, lastName, email, password, role, phoneNumber
+            ) 
+            OUTPUT INSERTED.id
+            VALUES (
+                :firstName, :lastName, :email, :password, :role, :phoneNumber
+            )
+        `;
 
-            const [result] = await db.sequelize.query(insertQuery, {
-                replacements: {
-                    firstName,
-                    lastName,
-                    email,
-                    password: hashedPassword,
-                    role: role || 'user',
-                    phoneNumber
-                },
-                type: db.Sequelize.QueryTypes.INSERT
-            });
+        const [result] = await db.sequelize.query(insertQuery, {
+            replacements: {
+                firstName,
+                lastName,
+                email,
+                password: hashedPassword,
+                role: role || 'user',
+                phoneNumber
+            },
+            type: db.Sequelize.QueryTypes.INSERT
+        });
 
-            // Lấy ID của người dùng vừa tạo
-            const userId = result[0].id;
-            const newUser = await db.User.findByPk(userId);
+        // Lấy ID của người dùng vừa tạo
+        const userId = result[0].id;
+        const newUser = await db.User.findByPk(userId);
 
-            console.log("Người dùng mới đã được tạo:", {
+        return res.status(201).json({
+            message: "Tạo người dùng thành công",
+            user: {
                 id: newUser.id,
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
                 email: newUser.email,
-                role: newUser.role,
-                password: "Đã được mã hóa"
-            });
-
-            return res.status(201).json({
-                message: "Tạo người dùng thành công",
-                user: {
-                    id: newUser.id,
-                    firstName: newUser.firstName,
-                    lastName: newUser.lastName,
-                    email: newUser.email,
-                    role: newUser.role
-                }
-            });
-        } catch (dbError) {
-            console.error("Lỗi khi lưu người dùng vào database:", dbError);
-            return res.status(500).send("Đã xảy ra lỗi khi lưu người dùng vào hệ thống");
-        }
+                role: newUser.role
+            }
+        });
     } catch (err) {
-        console.error("Lỗi khi tạo người dùng:", err);
         return res.status(500).send("Đã xảy ra lỗi khi tạo người dùng");
     }
 };
@@ -268,42 +238,23 @@ let updateUser = async (req, res) => {
                 return res.status(400).send("Mật khẩu phải có ít nhất 6 ký tự");
             }
 
-            try {
-                const salt = await bcrypt.genSalt(10);
-                const hashedPassword = await bcrypt.hash(password, salt);
-                updateFields += ", password = :password";
-                queryParams.password = hashedPassword;
-                console.log("Mật khẩu mới đã được mã hóa thành công");
-            } catch (hashError) {
-                console.error("Lỗi khi mã hóa mật khẩu mới:", hashError);
-                return res.status(500).send("Đã xảy ra lỗi khi mã hóa mật khẩu mới");
-            }
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+            updateFields += ", password = :password";
+            queryParams.password = hashedPassword;
         }
 
         // Update user in database using raw query
-        try {
-            await db.sequelize.query(
-                `UPDATE Users SET ${updateFields} WHERE id = :userId`,
-                {
-                    replacements: queryParams,
-                    type: db.Sequelize.QueryTypes.UPDATE
-                }
-            );
+        await db.sequelize.query(
+            `UPDATE Users SET ${updateFields} WHERE id = :userId`,
+            {
+                replacements: queryParams,
+                type: db.Sequelize.QueryTypes.UPDATE
+            }
+        );
 
-            console.log("Người dùng đã được cập nhật:", {
-                id: userId,
-                email: email,
-                role: queryParams.role,
-                passwordChanged: password ? "Đã thay đổi" : "Không thay đổi"
-            });
-
-            return res.status(200).json({ message: "Cập nhật thông tin thành công" });
-        } catch (dbError) {
-            console.error("Lỗi khi cập nhật thông tin trong database:", dbError);
-            return res.status(500).send("Đã xảy ra lỗi khi lưu thông tin vào hệ thống");
-        }
+        return res.status(200).json({ message: "Cập nhật thông tin thành công" });
     } catch (err) {
-        console.error("Lỗi khi cập nhật thông tin người dùng:", err);
         return res.status(500).send("Đã xảy ra lỗi khi cập nhật thông tin người dùng");
     }
 };
@@ -365,8 +316,6 @@ let deleteUser = async (req, res) => {
                     type: db.Sequelize.QueryTypes.DELETE
                 }
             );
-
-            console.log(`Đã xóa ${userVehicles.length} phương tiện từ ${userApartments.length} căn hộ của user ${userId}`);
         }
 
         // Nếu user có căn hộ, set quyền sở hữu về NULL cho TẤT CẢ căn hộ
@@ -378,8 +327,6 @@ let deleteUser = async (req, res) => {
                     type: db.Sequelize.QueryTypes.UPDATE
                 }
             );
-            const apartmentList = userApartments.map(apt => apt.ApartmentID).join(', ');
-            console.log(`Đã hủy quyền sở hữu ${userApartments.length} căn hộ (${apartmentList}) của user ${userId}`);
         }
 
         // Delete related fees first
@@ -403,8 +350,7 @@ let deleteUser = async (req, res) => {
 
         return res.status(200).json({ message: message });
     } catch (err) {
-        console.error("Lỗi khi xóa người dùng:", err);
-        return res.status(500).send("Đã xảy ra lỗi khi xóa người dùng: " + err.message);
+        return res.status(500).send("Đã xảy ra lỗi khi xóa người dùng");
     }
 };
 
